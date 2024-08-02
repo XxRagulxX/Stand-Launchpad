@@ -187,7 +187,7 @@ namespace Stand_Launchpad
 		private int checkForUpdate(bool recheck)
 		{
 			HttpClient httpClient = new HttpClient();
-			Task<string> httpTask = httpClient.GetStringAsync("https://stand.gg/versions.txt");
+			Task<string> httpTask = httpClient.GetStringAsync("https://stand.sh/versions.txt");
 			DirectoryInfo bin_di = new DirectoryInfo(stand_dir + "\\Bin\\");
 			string versions_string = "";
 			try
@@ -273,7 +273,7 @@ namespace Stand_Launchpad
 			{
 				if (showMessageBox("Launchpad " + versions[0] + " is available. Would you like to download it?", MessageBoxButtons.YesNo) == DialogResult.Yes)
 				{
-					Process.Start("https://stand.gg/launchpad_update");
+					Process.Start("https://stand.sh/launchpad_update");
 				}
 				any_updates = true;
 			}
@@ -307,7 +307,7 @@ namespace Stand_Launchpad
 				var syncObject = new object();
 				lock (syncObject)
 				{
-					webClient.DownloadFileAsync(new Uri("https://stand.gg/Stand%20" + versions[1] + ".dll"), stand_dll + ".tmp", syncObject);
+					webClient.DownloadFileAsync(new Uri("https://stand.sh/Stand%20" + versions[1] + ".dll"), stand_dll + ".tmp", syncObject);
 					Monitor.Wait(syncObject);
 				}
 			});
