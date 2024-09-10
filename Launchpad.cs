@@ -153,9 +153,14 @@ namespace Stand_Launchpad
 				Properties.Settings.Default.Save();
 			}
 
+			// Apply saved state
 			AutoInjectCheckBox.Checked = Properties.Settings.Default.AutoInject;
 			AutoInjectDelaySeconds.Value = Properties.Settings.Default.AutoInjectDelaySeconds;
 			LauncherType.SelectedValue = Properties.Settings.Default.GameLauncher;
+			if (!Properties.Settings.Default.Advanced)
+			{
+				updateAdvancedMode();
+			}
 
 			toggleInjectOrLaunchBtn(false);
 			UpdateTimer.Start();
@@ -225,10 +230,12 @@ namespace Stand_Launchpad
 				DllList.Items.Clear();
 			}
 
+			// Update version number in simple mode view
 			if (!Properties.Settings.Default.Advanced)
 			{
 				updateAdvancedMode();
 			}
+
 			DllList.Items.Add("Stand " + versions[1]);
 			if (Properties.Settings.Default.CustomDll != "")
 			{
@@ -602,7 +609,10 @@ namespace Stand_Launchpad
 			{
 				MinimizeBox = false;
 				Width = width_simple;
-				InjectBtn.Text = "Inject Stand " + versions[1];
+				if (versions != null)
+				{
+					InjectBtn.Text = "Inject Stand " + versions[1];
+				}
 				AutoInjectDelaySeconds.Visible = false;
 				AddBtn.TabStop = false;
 				RemoveBtn.TabStop = false;
