@@ -524,7 +524,7 @@ namespace Stand_Launchpad
 					&& !failedBecauseOfAntiVirus
 					)
 				{
-					showMessageBox("No DLL was injected. You may need to start the Launchpad as Administrator.");
+					showMessageBox("No DLL was injected.\n1. Ensure that BattlEye is disabled.\n2. If it still doesn't work, try running the Launchpad as Administrator.");
 				}
 
 				EnableReInject();
