@@ -63,8 +63,8 @@ namespace Stand_Launchpad
 		private static Random random = new Random();
 
 		// Don't forget to update the file version
-		private const string launchpad_update_version = "1.9.2";
-		private const string launchpad_display_version = "1.9.2";
+		private const string launchpad_update_version = "1.9.3";
+		private const string launchpad_display_version = "1.9.3";
 
 		private string stand_dir;
 		private FileStream lockfile;
