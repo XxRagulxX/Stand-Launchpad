@@ -149,7 +149,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <None Include="icon.ico" />
+    <None Include="Yimmenu_logo.ico" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
