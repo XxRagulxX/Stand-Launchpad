@@ -64,7 +64,7 @@
             this.InjectBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(40)))), ((int)(((byte)(43)))));
             this.InjectBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(25)))), ((int)(((byte)(29)))));
             this.InjectBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.InjectBtn.Location = new System.Drawing.Point(12, 12);
+            this.InjectBtn.Location = new System.Drawing.Point(12, 7);
             this.InjectBtn.Name = "InjectBtn";
             this.InjectBtn.Size = new System.Drawing.Size(208, 23);
             this.InjectBtn.TabIndex = 0;
@@ -283,7 +283,7 @@
             this.LaunchBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(40)))), ((int)(((byte)(43)))));
             this.LaunchBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(25)))), ((int)(((byte)(29)))));
             this.LaunchBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.LaunchBtn.Location = new System.Drawing.Point(12, 12);
+            this.LaunchBtn.Location = new System.Drawing.Point(11, 7);
             this.LaunchBtn.Name = "LaunchBtn";
             this.LaunchBtn.Size = new System.Drawing.Size(74, 23);
             this.LaunchBtn.TabIndex = 1;
@@ -293,7 +293,7 @@
             // 
             // progressBar1
             // 
-            this.progressBar1.Location = new System.Drawing.Point(12, 12);
+            this.progressBar1.Location = new System.Drawing.Point(6, 7);
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(208, 23);
             this.progressBar1.TabIndex = 0;
@@ -314,18 +314,10 @@
             // 
             // ChanglogBtn
             // 
-            this.ChanglogBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(40)))), ((int)(((byte)(43)))));
-            this.ChanglogBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(25)))), ((int)(((byte)(29)))));
-            this.ChanglogBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ChanglogBtn.ForeColor = System.Drawing.Color.White;
-            this.ChanglogBtn.Location = new System.Drawing.Point(146, 64);
+            this.ChanglogBtn.Location = new System.Drawing.Point(11, 7);
             this.ChanglogBtn.Name = "ChanglogBtn";
-            this.ChanglogBtn.Size = new System.Drawing.Size(74, 23);
-            this.ChanglogBtn.TabIndex = 6;
-            this.ChanglogBtn.Text = "Changelog";
-            this.ChanglogBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.ChanglogBtn.UseVisualStyleBackColor = false;
-            this.ChanglogBtn.Click += new System.EventHandler(this.ChangelogBtn_Click);
+            this.ChanglogBtn.Size = new System.Drawing.Size(75, 23);
+            this.ChanglogBtn.TabIndex = 18;
             // 
             // Launchpad
             // 

@@ -171,15 +171,22 @@ namespace Yimmenu_Launchpad
         private async void UpdateTimer_Tick(object sender, EventArgs e)
         {
             UpdateTimer.Stop();
+
+            // Await the async update check
             await checkForUpdate(false);
-            updateGtaPid();
-            processGtaPidUpdate(false);
+
+            // Update the GTA process ID and handle the update
+            bool pidUpdated = UpdateGtaPid();
+            ProcessGtaPidUpdate(false);
+
             if (gta_pid != 0)
             {
                 InjectBtn.Focus();
             }
+
             ProcessScanTimer.Start();
         }
+
 
         private bool isYimmenuDll(FileInfo file)
         {
@@ -334,86 +341,146 @@ namespace Yimmenu_Launchpad
             }
         }
 
-        private bool downloadYimmenuDll()
+        private async Task<bool> downloadYimmenuDll()
         {
             bool success = true;
-            InfoText.Text = "Downloading Yimmenu " + versions[1] + "...";
+            InfoText.Text = "Downloading latest YimMenu...";
             download_progress = 0;
+            progressBar1.Value = 0;
             progressBar1.Show();
-            var t = Task.Run(() =>
+
+            string releasesApiUrl = "https://api.github.com/repos/YimMenu/YimMenuV2/releases";
+            string userAgent = "Mozilla/5.0";
+            string dllDownloadUrl = "";
+            string dllFileName = "";
+
+            string tempPath = "";
+
+            try
             {
-                WebClient webClient = new WebClient();
-                webClient.DownloadProgressChanged += onDownloadProgress;
-                webClient.DownloadFileCompleted += onDownloadComplete;
-                var syncObject = new object();
-                lock (syncObject)
+                using (HttpClient httpClient = new HttpClient())
                 {
-                    webClient.DownloadFileAsync(new Uri("https://stand.sh/Stand%20" + versions[1] + ".dll"), yimmenu_dll + ".tmp", syncObject);
-                    Monitor.Wait(syncObject);
+                    httpClient.DefaultRequestHeaders.Add("User-Agent", userAgent);
+
+                    string releasesJson = await httpClient.GetStringAsync(releasesApiUrl);
+                    var releases = Newtonsoft.Json.Linq.JArray.Parse(releasesJson);
+                    var latestRelease = releases.FirstOrDefault();
+
+                    if (latestRelease != null)
+                    {
+                        var asset = latestRelease["assets"].FirstOrDefault(a => a["name"].ToString().EndsWith(".dll"));
+                        if (asset != null)
+                        {
+                            dllDownloadUrl = asset["browser_download_url"].ToString();
+                            dllFileName = asset["name"].ToString();
+                            yimmenu_dll = Path.Combine(yimmenu_dir, "Bin", dllFileName);
+                            tempPath = yimmenu_dll + ".tmp";
+                        }
+                        else
+                        {
+                            showMessageBox("DLL asset not found in the latest release.");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        showMessageBox("No releases found for YimMenu.");
+                        return false;
+                    }
+
+                    using (HttpResponseMessage response = await httpClient.GetAsync(dllDownloadUrl, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        long? totalBytes = response.Content.Headers.ContentLength;
+
+                        using (Stream contentStream = await response.Content.ReadAsStreamAsync(),
+                                      fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+                        {
+                            byte[] buffer = new byte[8192];
+                            long totalRead = 0;
+                            int bytesRead;
+
+                            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) != 0)
+                            {
+                                await fileStream.WriteAsync(buffer, 0, bytesRead);
+                                totalRead += bytesRead;
+
+                                if (totalBytes.HasValue)
+                                {
+                                    download_progress = (int)((totalRead * 100L) / totalBytes.Value);
+                                    progressBar1.Invoke((MethodInvoker)(() => progressBar1.Value = download_progress));
+                                }
+                            }
+                        }
+                    }
+
+                    File.Move(tempPath, yimmenu_dll);
+
+                    if (new FileInfo(yimmenu_dll).Length < 1024)
+                    {
+                        File.Delete(yimmenu_dll);
+                        showMessageBox("DLL download seems incomplete. Possibly blocked by antivirus.");
+                        success = false;
+                    }
                 }
-            });
-            do
-            {
-                progressBar1.Value = download_progress;
             }
-            while (!t.Wait(20));
-            File.Move(yimmenu_dll + ".tmp", yimmenu_dll);
-            if (new FileInfo(yimmenu_dll).Length < 1024)
+            catch (Exception ex)
             {
-                File.Delete(yimmenu_dll);
-                showMessageBox("It looks like the DLL download has failed. Ensure you have no antivirus program interfering.");
+                showMessageBox("Error downloading DLL from GitHub: " + ex.Message);
                 success = false;
             }
+
             progressBar1.Hide();
             return success;
         }
 
+
         private void ProcessScanTimer_Tick(object sender, EventArgs e)
         {
-            if (updateGtaPid())
+            if (UpdateGtaPid())
             {
-                processGtaPidUpdate(can_auto_inject);
+                ProcessGtaPidUpdate(can_auto_inject);
             }
         }
 
-        private bool updateGtaPid()
+        private bool UpdateGtaPid()
         {
-            foreach (Process process in Process.GetProcesses())
+            foreach (Process process in Process.GetProcessesByName("GTA5_Enhanced"))
             {
-                if (process.ProcessName == "GTA5")
+                if (gta_pid != process.Id)
                 {
-                    if (gta_pid == process.Id)
-                    {
-                        return false;
-                    }
                     gta_pid = process.Id;
                     game_was_open = true;
                     return true;
                 }
+                return false;
             }
+
             AutoInjectTimer.Stop();
-            var pid_changed = gta_pid != 0;
+            bool pidChanged = gta_pid != 0;
             gta_pid = 0;
-            return pid_changed;
+            return pidChanged;
         }
 
-        private void processGtaPidUpdate(bool proc_can_auto_inject)
+        private void ProcessGtaPidUpdate(bool procCanAutoInject)
         {
-            var gameRunning = (gta_pid != 0);
+            bool gameRunning = gta_pid != 0;
             toggleInjectOrLaunchBtn(gameRunning);
+
             if (gameRunning)
             {
-                if (AutoInjectCheckBox.Checked && proc_can_auto_inject)
+                if (AutoInjectCheckBox.Checked && procCanAutoInject)
                 {
                     if (Properties.Settings.Default.Advanced && AutoInjectDelaySeconds.Value > 0)
                     {
-                        InfoText.Text = "Automatically injecting in a few seconds...";
+                        InfoText.Text = $"Automatically injecting in {AutoInjectDelaySeconds.Value} seconds...";
                         AutoInjectTimer.Interval = (int)AutoInjectDelaySeconds.Value * 1000;
                         AutoInjectTimer.Start();
                     }
                     else
                     {
-                        inject();
+                        _ = inject(); // Assume `Inject` is now async
                     }
                 }
                 else
@@ -435,20 +502,22 @@ namespace Yimmenu_Launchpad
 
         private void InjectBtn_Click(object sender, EventArgs e)
         {
-            inject();
+            _ = inject(); // Ensure Inject is async
         }
 
         private void AutoInjectTimer_Tick(object sender, EventArgs e)
         {
-            inject();
+            _ = inject(); // Ensure Inject is async
         }
 
-        private void inject()
+
+        private async Task inject()
         {
             var failedBecauseOfAntiVirus = false;
             AutoInjectTimer.Stop();
             ProcessScanTimer.Stop();
             InjectBtn.Enabled = false;
+
             List<string> dlls = new List<string>();
             if (Properties.Settings.Default.Advanced)
             {
@@ -464,13 +533,16 @@ namespace Yimmenu_Launchpad
             {
                 dlls.Add(yimmenu_dll);
             }
+
             if (dlls.Contains(yimmenu_dll) && !File.Exists(yimmenu_dll))
             {
-                if (!downloadYimmenuDll())
+                bool success = await downloadYimmenuDll(); // Ensure your download function is async
+                if (!success)
                 {
                     dlls.Remove(yimmenu_dll);
                 }
             }
+
             InfoText.Text = "Injecting...";
             int injected = 0;
             IntPtr pHandle = OpenProcess(1082u, 1, (uint)gta_pid);
@@ -488,7 +560,7 @@ namespace Yimmenu_Launchpad
                 }
                 else
                 {
-                    string temp_dir = yimmenu_dir + "\\Bin\\Temp";
+                    string temp_dir = Path.Combine(yimmenu_dir, "Bin", "Temp");
                     if (!Directory.Exists(temp_dir))
                     {
                         Directory.CreateDirectory(temp_dir);
@@ -498,18 +570,17 @@ namespace Yimmenu_Launchpad
                         DirectoryInfo temp_di = new DirectoryInfo(temp_dir);
                         foreach (FileInfo file in temp_di.GetFiles())
                         {
-                            try
-                            {
-                                file.Delete();
-                            }
-                            catch (Exception)
-                            {
-                            }
+                            try { file.Delete(); } catch { }
                         }
                     }
-                    var VirtualAllocEx = (VirtualAllocExDelegate)Marshal.GetDelegateForFunctionPointer(GetProcAddress(hKernel32, "VirtualAllocEx"), typeof(VirtualAllocExDelegate));
-                    var WriteProcessMemory = (WriteProcessMemoryDelegate)Marshal.GetDelegateForFunctionPointer(GetProcAddress(hKernel32, "WriteProcessMemory"), typeof(WriteProcessMemoryDelegate));
-                    var CreateRemoteThread = (CreateRemoteThreadDelegate)Marshal.GetDelegateForFunctionPointer(GetProcAddress(hKernel32, "CreateRemoteThread"), typeof(CreateRemoteThreadDelegate));
+
+                    var VirtualAllocEx = (VirtualAllocExDelegate)Marshal.GetDelegateForFunctionPointer(
+                        GetProcAddress(hKernel32, "VirtualAllocEx"), typeof(VirtualAllocExDelegate));
+                    var WriteProcessMemory = (WriteProcessMemoryDelegate)Marshal.GetDelegateForFunctionPointer(
+                        GetProcAddress(hKernel32, "WriteProcessMemory"), typeof(WriteProcessMemoryDelegate));
+                    var CreateRemoteThread = (CreateRemoteThreadDelegate)Marshal.GetDelegateForFunctionPointer(
+                        GetProcAddress(hKernel32, "CreateRemoteThread"), typeof(CreateRemoteThreadDelegate));
+
                     try
                     {
                         foreach (string dll in dlls)
@@ -519,25 +590,30 @@ namespace Yimmenu_Launchpad
                                 Console.WriteLine("Couldn't inject " + dll + " because the file doesn't exist.");
                                 continue;
                             }
-                            string dll_copy = temp_dir + "\\SL_" + generateRandomString(5) + ".dll";
+
+                            string dll_copy = Path.Combine(temp_dir, "YM_" + generateRandomString(5) + ".dll");
                             File.Copy(dll, dll_copy);
+
                             byte[] dllBytes = Encoding.Unicode.GetBytes(dll_copy);
-                            IntPtr baseAddress = VirtualAllocEx(pHandle, (IntPtr)null, (IntPtr)dllBytes.Length, 12288u, 64u);
+                            IntPtr baseAddress = VirtualAllocEx(pHandle, IntPtr.Zero, (IntPtr)dllBytes.Length, 0x3000, 0x40);
                             if (baseAddress == IntPtr.Zero)
                             {
-                                Console.WriteLine("Couldn't allocate the bytes to represent " + dll);
+                                Console.WriteLine("Couldn't allocate memory for " + dll);
                                 continue;
                             }
+
                             if (WriteProcessMemory(pHandle, baseAddress, dllBytes, (uint)dllBytes.Length, 0) == 0)
                             {
                                 Console.WriteLine("Couldn't write " + dll_copy + " to allocated memory");
                                 continue;
                             }
-                            if (CreateRemoteThread(pHandle, (IntPtr)null, IntPtr.Zero, procAddress, baseAddress, 0u, (IntPtr)null) == IntPtr.Zero)
+
+                            if (CreateRemoteThread(pHandle, IntPtr.Zero, IntPtr.Zero, procAddress, baseAddress, 0, IntPtr.Zero) == IntPtr.Zero)
                             {
                                 Console.WriteLine("Failed to create remote thread for " + dll);
                                 continue;
                             }
+
                             injected++;
                         }
                     }
@@ -550,14 +626,12 @@ namespace Yimmenu_Launchpad
                 }
                 CloseHandle(pHandle);
             }
-            InfoText.Text = "Injected " + injected.ToString() + "/" + dlls.Count.ToString() + " DLLs.";
+
+            InfoText.Text = $"Injected {injected}/{dlls.Count} DLLs.";
 
             if (injected == 0)
             {
-                if (!any_successful_injection
-                    && dlls.Count != 0
-                    && !failedBecauseOfAntiVirus
-                    )
+                if (!any_successful_injection && dlls.Count != 0 && !failedBecauseOfAntiVirus)
                 {
                     showMessageBox("No DLL was injected.\n1. Ensure that BattlEye is disabled.\n2. If it still doesn't work, try running the Launchpad as Administrator.");
                 }
@@ -745,10 +819,10 @@ namespace Yimmenu_Launchpad
             can_auto_inject = true;
         }
 
-        private void ChangelogBtn_Click(object sender, EventArgs e)
-        {
-            (new Changelog()).Show();
-        }
+        //private void ChangelogBtn_Click(object sender, EventArgs e)
+        //{
+        //    (new Changelog()).Show();
+        //}
 
         private void ReInjectTimer_Tick(object sender, EventArgs e)
         {
@@ -773,7 +847,7 @@ namespace Yimmenu_Launchpad
             {
                 showMessageBox("Everything up-to-date.");
             }
-            processGtaPidUpdate(false);
+            ProcessGtaPidUpdate(false);
         }
         private void DllList_DragOver(object sender, DragEventArgs e)
         {
