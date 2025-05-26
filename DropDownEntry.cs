@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Stand_Launchpad
+namespace Yimmenu_Launchpad
 {
 	internal class DropDownEntry
 	{

@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace Stand_Launchpad
+namespace Yimmenu_Launchpad
 {
 	public partial class Changelog : Form
 	{

@@ -1,4 +1,4 @@
-﻿namespace Stand_Launchpad
+﻿namespace Yimmenu_Launchpad
 {
 	partial class Launchpad
 	{
@@ -46,7 +46,7 @@
 			this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
 			this.ChanglogBtn = new System.Windows.Forms.Button();
 			this.ReInjectTimer = new System.Windows.Forms.Timer(this.components);
-			this.StandFolderBtn = new System.Windows.Forms.Button();
+			this.YimmenuFolderBtn = new System.Windows.Forms.Button();
 			this.UpdCheckBtn = new System.Windows.Forms.Button();
 			this.DllList = new System.Windows.Forms.ListView();
 			this.Column = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -217,19 +217,19 @@
 			this.ReInjectTimer.Interval = 3000;
 			this.ReInjectTimer.Tick += new System.EventHandler(this.ReInjectTimer_Tick);
 			// 
-			// StandFolderBtn
+			// YimmenuFolderBtn
 			// 
-			this.StandFolderBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(40)))), ((int)(((byte)(43)))));
-			this.StandFolderBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(25)))), ((int)(((byte)(29)))));
-			this.StandFolderBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.StandFolderBtn.Location = new System.Drawing.Point(12, 93);
-			this.StandFolderBtn.Name = "StandFolderBtn";
-			this.StandFolderBtn.Size = new System.Drawing.Size(208, 23);
-			this.StandFolderBtn.TabIndex = 7;
-			this.StandFolderBtn.Text = "Open Stand Folder";
-			this.StandFolderBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			this.StandFolderBtn.UseVisualStyleBackColor = false;
-			this.StandFolderBtn.Click += new System.EventHandler(this.StandFolderBtn_Click);
+			this.YimmenuFolderBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(40)))), ((int)(((byte)(43)))));
+			this.YimmenuFolderBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(25)))), ((int)(((byte)(29)))));
+			this.YimmenuFolderBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.YimmenuFolderBtn.Location = new System.Drawing.Point(12, 93);
+			this.YimmenuFolderBtn.Name = "YimmenuFolderBtn";
+			this.YimmenuFolderBtn.Size = new System.Drawing.Size(208, 23);
+			this.YimmenuFolderBtn.TabIndex = 7;
+			this.YimmenuFolderBtn.Text = "Open Yimmenu Folder";
+			this.YimmenuFolderBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			this.YimmenuFolderBtn.UseVisualStyleBackColor = false;
+			this.YimmenuFolderBtn.Click += new System.EventHandler(this.YimmenuFolderBtn_Click);
 			// 
 			// UpdCheckBtn
 			// 
@@ -291,7 +291,7 @@
 			// 
 			// dropDownEntryBindingSource
 			// 
-			this.dropDownEntryBindingSource.DataSource = typeof(Stand_Launchpad.DropDownEntry);
+			this.dropDownEntryBindingSource.DataSource = typeof(Yimmenu_Launchpad.DropDownEntry);
 			// 
 			// LaunchBtn
 			// 
@@ -339,7 +339,7 @@
 			this.Controls.Add(this.LauncherType);
 			this.Controls.Add(this.DllList);
 			this.Controls.Add(this.UpdCheckBtn);
-			this.Controls.Add(this.StandFolderBtn);
+			this.Controls.Add(this.YimmenuFolderBtn);
 			this.Controls.Add(this.ChanglogBtn);
 			this.Controls.Add(this.AutoInjectDelayLabel);
 			this.Controls.Add(this.AutoInjectDelaySeconds);
@@ -355,7 +355,7 @@
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.MaximizeBox = false;
 			this.Name = "Launchpad";
-			this.Text = "Stand Launchpad";
+			this.Text = "Yimmenu Launchpad";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Launchpad_FormClosing);
 			((System.ComponentModel.ISupportInitialize)(this.AutoInjectDelaySeconds)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.dropDownEntryBindingSource)).EndInit();
@@ -382,7 +382,7 @@
 		private System.Windows.Forms.Timer UpdateTimer;
 		private System.Windows.Forms.Button ChanglogBtn;
 		private System.Windows.Forms.Timer ReInjectTimer;
-		private System.Windows.Forms.Button StandFolderBtn;
+		private System.Windows.Forms.Button YimmenuFolderBtn;
 		private System.Windows.Forms.Button UpdCheckBtn;
 		private System.Windows.Forms.ListView DllList;
 		private System.Windows.Forms.ComboBox LauncherType;
