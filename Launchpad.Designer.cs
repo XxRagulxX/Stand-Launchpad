@@ -1,33 +1,33 @@
 ﻿namespace Yimmenu_Launchpad
 {
-	partial class Launchpad
-	{
-		/// <summary>
-		/// Required designer variable.
-		/// </summary>
-		private System.ComponentModel.IContainer components = null;
+    partial class Launchpad
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
 
-		/// <summary>
-		/// Clean up any resources being used.
-		/// </summary>
-		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-		protected override void Dispose(bool disposing)
-		{
-			if (disposing && (components != null))
-			{
-				components.Dispose();
-			}
-			base.Dispose(disposing);
-		}
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
 
-		#region Windows Form Designer generated code
+        #region Windows Form Designer generated code
 
-		/// <summary>
-		/// Required method for Designer support - do not modify
-		/// the contents of this method with the code editor.
-		/// </summary>
-		private void InitializeComponent()
-		{
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Launchpad));
             this.InjectBtn = new System.Windows.Forms.Button();
@@ -44,6 +44,7 @@
             this.AutoInjectTimer = new System.Windows.Forms.Timer(this.components);
             this.GameClosedTimer = new System.Windows.Forms.Timer(this.components);
             this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.ChanglogBtn = new System.Windows.Forms.Button();
             this.ReInjectTimer = new System.Windows.Forms.Timer(this.components);
             this.YimmenuFolderBtn = new System.Windows.Forms.Button();
             this.UpdCheckBtn = new System.Windows.Forms.Button();
@@ -54,7 +55,6 @@
             this.LaunchBtn = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.AddBtn = new System.Windows.Forms.Button();
-            this.ChanglogBtn = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.AutoInjectDelaySeconds)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dropDownEntryBindingSource)).BeginInit();
             this.SuspendLayout();
@@ -64,7 +64,7 @@
             this.InjectBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(40)))), ((int)(((byte)(43)))));
             this.InjectBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(25)))), ((int)(((byte)(29)))));
             this.InjectBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.InjectBtn.Location = new System.Drawing.Point(12, 7);
+            this.InjectBtn.Location = new System.Drawing.Point(12, 12);
             this.InjectBtn.Name = "InjectBtn";
             this.InjectBtn.Size = new System.Drawing.Size(208, 23);
             this.InjectBtn.TabIndex = 0;
@@ -197,6 +197,21 @@
             this.UpdateTimer.Interval = 1;
             this.UpdateTimer.Tick += new System.EventHandler(this.UpdateTimer_Tick);
             // 
+            // ChanglogBtn
+            // 
+            this.ChanglogBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(40)))), ((int)(((byte)(43)))));
+            this.ChanglogBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(25)))), ((int)(((byte)(29)))));
+            this.ChanglogBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ChanglogBtn.ForeColor = System.Drawing.Color.White;
+            this.ChanglogBtn.Location = new System.Drawing.Point(146, 64);
+            this.ChanglogBtn.Name = "ChanglogBtn";
+            this.ChanglogBtn.Size = new System.Drawing.Size(74, 23);
+            this.ChanglogBtn.TabIndex = 6;
+            this.ChanglogBtn.Text = "Changelog";
+            this.ChanglogBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.ChanglogBtn.UseVisualStyleBackColor = false;
+            this.ChanglogBtn.Click += new System.EventHandler(this.YimFolderBtn_Click);
+            // 
             // ReInjectTimer
             // 
             this.ReInjectTimer.Interval = 3000;
@@ -283,7 +298,7 @@
             this.LaunchBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(40)))), ((int)(((byte)(43)))));
             this.LaunchBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(25)))), ((int)(((byte)(29)))));
             this.LaunchBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.LaunchBtn.Location = new System.Drawing.Point(9, 12);
+            this.LaunchBtn.Location = new System.Drawing.Point(12, 12);
             this.LaunchBtn.Name = "LaunchBtn";
             this.LaunchBtn.Size = new System.Drawing.Size(74, 23);
             this.LaunchBtn.TabIndex = 1;
@@ -311,13 +326,6 @@
             this.AddBtn.Text = "Add";
             this.AddBtn.UseVisualStyleBackColor = false;
             this.AddBtn.Click += new System.EventHandler(this.AddBtn_Click);
-            // 
-            // ChanglogBtn
-            // 
-            this.ChanglogBtn.Location = new System.Drawing.Point(8, 12);
-            this.ChanglogBtn.Name = "ChanglogBtn";
-            this.ChanglogBtn.Size = new System.Drawing.Size(75, 23);
-            this.ChanglogBtn.TabIndex = 18;
             // 
             // Launchpad
             // 
@@ -354,35 +362,34 @@
             this.ResumeLayout(false);
             this.PerformLayout();
 
-		}
+        }
 
-		#endregion
+        #endregion
 
-		private System.Windows.Forms.Button InjectBtn;
-		private System.Windows.Forms.Label InfoText;
-		private System.Windows.Forms.CheckBox AutoInjectCheckBox;
-		private System.Windows.Forms.OpenFileDialog CustomDllDialog;
-		private System.Windows.Forms.Button AdvancedBtn;
-		private System.Windows.Forms.Timer ProcessScanTimer;
-		private System.Windows.Forms.Button RemoveBtn;
-		private System.Windows.Forms.Button UpBtn;
-		private System.Windows.Forms.Button DownBtn;
-		private System.Windows.Forms.NumericUpDown AutoInjectDelaySeconds;
-		private System.Windows.Forms.Label AutoInjectDelayLabel;
-		private System.Windows.Forms.Timer AutoInjectTimer;
-		private System.Windows.Forms.Timer GameClosedTimer;
-		private System.Windows.Forms.Timer UpdateTimer;
-		private System.Windows.Forms.Timer ReInjectTimer;
-		private System.Windows.Forms.Button YimmenuFolderBtn;
-		private System.Windows.Forms.Button UpdCheckBtn;
-		private System.Windows.Forms.ListView DllList;
-		private System.Windows.Forms.ComboBox LauncherType;
-		private System.Windows.Forms.BindingSource dropDownEntryBindingSource;
-		private System.Windows.Forms.Button LaunchBtn;
-		private System.Windows.Forms.ProgressBar progressBar1;
-		private System.Windows.Forms.ColumnHeader Column;
-		private System.Windows.Forms.Button AddBtn;
+        private System.Windows.Forms.Button InjectBtn;
+        private System.Windows.Forms.Label InfoText;
+        private System.Windows.Forms.CheckBox AutoInjectCheckBox;
+        private System.Windows.Forms.OpenFileDialog CustomDllDialog;
+        private System.Windows.Forms.Button AdvancedBtn;
+        private System.Windows.Forms.Timer ProcessScanTimer;
+        private System.Windows.Forms.Button RemoveBtn;
+        private System.Windows.Forms.Button UpBtn;
+        private System.Windows.Forms.Button DownBtn;
+        private System.Windows.Forms.NumericUpDown AutoInjectDelaySeconds;
+        private System.Windows.Forms.Label AutoInjectDelayLabel;
+        private System.Windows.Forms.Timer AutoInjectTimer;
+        private System.Windows.Forms.Timer GameClosedTimer;
+        private System.Windows.Forms.Timer UpdateTimer;
         private System.Windows.Forms.Button ChanglogBtn;
+        private System.Windows.Forms.Timer ReInjectTimer;
+        private System.Windows.Forms.Button YimmenuFolderBtn;
+        private System.Windows.Forms.Button UpdCheckBtn;
+        private System.Windows.Forms.ListView DllList;
+        private System.Windows.Forms.ComboBox LauncherType;
+        private System.Windows.Forms.BindingSource dropDownEntryBindingSource;
+        private System.Windows.Forms.Button LaunchBtn;
+        private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.ColumnHeader Column;
+        private System.Windows.Forms.Button AddBtn;
     }
 }
-
