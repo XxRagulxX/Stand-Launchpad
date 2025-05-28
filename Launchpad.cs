@@ -898,7 +898,7 @@ namespace Yimmenu_Launchpad
                 case (int)LauncherId.RSG:
                     try
                     {
-                        using (var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Rockstar Games\\Grand Theft Auto V"))
+                        using (var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Rockstar Games\\GTAV Enhanced"))
                         {
                             var path = (string)key?.GetValue("InstallFolder");
                             if (path != null)
