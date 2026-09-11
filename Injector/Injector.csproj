@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>Launchpad.Injector</RootNamespace>
+    <AssemblyName>Launchpad.Injector</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!--
+      This project only ever runs on Windows: natively on Windows, or under
+      Wine/Proton on Linux. It is the sole place in the solution allowed to
+      P/Invoke kernel32 for remote-thread DLL injection - there is no Linux
+      equivalent of CreateRemoteThread, so this binary must execute inside
+      the same Windows/Wine process & memory space as the target game.
+    -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+  </PropertyGroup>
+
+</Project>

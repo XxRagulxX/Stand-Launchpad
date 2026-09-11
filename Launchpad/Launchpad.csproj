@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Launchpad</RootNamespace>
+    <AssemblyName>Launchpad</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>../icon.ico</ApplicationIcon>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <!-- Classic (reflection) bindings: this app is small code-behind driven UI, not MVVM -->
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="**/*.axaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+    <!-- Cross-platform package: throws PlatformNotSupportedException on Linux, guarded by OperatingSystem.IsWindows() -->
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Launchpad.Injector is always built for win-x64 and is either run
+      directly (native Windows) or via `wine` (Linux). It ships alongside
+      this executable rather than being referenced as a library, because it
+      must run as its own Windows/Wine process.
+    -->
+    <None Include="../Injector/bin/$(Configuration)/net10.0-windows/win-x64/publish/**"
+          Condition="Exists('../Injector/bin/$(Configuration)/net10.0-windows/win-x64/publish')">
+      <Link>Injector/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

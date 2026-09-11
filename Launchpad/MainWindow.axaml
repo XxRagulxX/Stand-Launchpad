@@ -1,0 +1,50 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:Launchpad"
+        x:Class="Launchpad.MainWindow"
+        Title="Launchpad"
+        Width="420" Height="360"
+        CanResize="False">
+    <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+
+        <!-- Row 0: Inject / Launch -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,*">
+            <Button x:Name="InjectBtn" Grid.Column="0" Content="Inject" HorizontalAlignment="Stretch"
+                    Click="InjectBtn_Click" IsVisible="False" />
+            <ComboBox x:Name="LauncherType" Grid.Column="0" HorizontalAlignment="Stretch"
+                      DisplayMemberBinding="{Binding Name}"
+                      SelectionChanged="LauncherType_SelectionChanged" />
+            <Button x:Name="LaunchBtn" Grid.Column="1" Content="Launch" Margin="6,0,0,0"
+                    HorizontalAlignment="Stretch" Click="LaunchBtn_Click" />
+        </Grid>
+
+        <!-- Row 1: auto-inject options -->
+        <Grid Grid.Row="1" Margin="0,8,0,0" ColumnDefinitions="*,Auto,Auto">
+            <CheckBox x:Name="AutoInjectCheckBox" Grid.Column="0" Content="Auto-inject when game starts"
+                      Checked="AutoInjectCheckBox_Changed" Unchecked="AutoInjectCheckBox_Changed" />
+            <TextBlock Grid.Column="1" Text="Delay (s):" VerticalAlignment="Center" Margin="0,0,4,0" />
+            <NumericUpDown x:Name="AutoInjectDelaySeconds" Grid.Column="2" Minimum="0" Maximum="300" Width="90" />
+        </Grid>
+
+        <!-- Row 2: DLL list -->
+        <ListBox x:Name="DllList" Grid.Row="2" Margin="0,8,0,0"
+                 SelectionMode="Multiple">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="local:DllEntry" x:DataType="local:DllEntry">
+                    <CheckBox Content="{Binding Path}" IsChecked="{Binding Checked}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Row 3: DLL list controls -->
+        <Grid Grid.Row="3" Margin="0,6,0,0" ColumnDefinitions="*,*,*,*">
+            <Button Grid.Column="0" Content="Add..." Click="AddBtn_Click" HorizontalAlignment="Stretch" Margin="0,0,3,0" />
+            <Button Grid.Column="1" Content="Remove" Click="RemoveBtn_Click" HorizontalAlignment="Stretch" Margin="3,0" />
+            <Button Grid.Column="2" Content="Up" Click="UpBtn_Click" HorizontalAlignment="Stretch" Margin="3,0" />
+            <Button Grid.Column="3" Content="Down" Click="DownBtn_Click" HorizontalAlignment="Stretch" Margin="3,0,0,0" />
+        </Grid>
+
+        <!-- Row 4: status -->
+        <TextBlock x:Name="InfoText" Grid.Row="4" Margin="0,8,0,0" Text="Ready to inject; just start the game." TextWrapping="Wrap" />
+    </Grid>
+</Window>
