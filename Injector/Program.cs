@@ -16,6 +16,13 @@ namespace Launchpad.Injector;
 ///     One-shot. Injects each DLL into the given pid, printing progress
 ///     lines and a final "INJECTED &lt;count&gt;/&lt;total&gt;" line, then exits
 ///     with that count as its exit code.
+///
+///   Launchpad.Injector launch &lt;epic|rockstar&gt;
+///     One-shot. Launches the given storefront from inside this process's
+///     Windows/Wine context (registry lookups + protocol URLs), printing
+///     "LAUNCHED" or "ERROR &lt;message&gt;", exit code 0/1. Steam isn't handled
+///     here - its steam:// protocol already works from the native Linux
+///     side without Wine, so the UI calls it directly.
 /// </summary>
 internal static class Program
 {
@@ -23,7 +30,7 @@ internal static class Program
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: Launchpad.Injector <watch|inject> [args...]");
+            Console.Error.WriteLine("Usage: Launchpad.Injector <watch|inject|launch> [args...]");
             return -1;
         }
 
@@ -31,6 +38,7 @@ internal static class Program
         {
             "watch" => RunWatch(),
             "inject" => RunInject(args[1..]),
+            "launch" => RunLaunch(args[1..]),
             _ => Unknown(args[0]),
         };
     }
@@ -72,5 +80,18 @@ internal static class Program
 
         Console.WriteLine($"INJECTED {injected}/{dlls.Length}");
         return injected;
+    }
+
+    private static int RunLaunch(string[] rest)
+    {
+        if (rest.Length < 1)
+        {
+            Console.Error.WriteLine("Usage: Launchpad.Injector launch <epic|rockstar>");
+            return -1;
+        }
+
+        bool ok = StorefrontLauncher.TryLaunch(rest[0], out var error);
+        Console.WriteLine(ok ? "LAUNCHED" : $"ERROR {error}");
+        return ok ? 0 : 1;
     }
 }

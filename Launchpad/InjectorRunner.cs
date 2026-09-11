@@ -79,6 +79,35 @@ internal sealed class InjectorRunner
         return process.ExitCode;
     }
 
+    /// <summary>
+    /// Launches Epic Games/Rockstar Games from inside the injector's
+    /// Windows/Wine context (registry lookups + protocol URLs that only
+    /// resolve there). Returns null on success, or an error message.
+    /// Steam isn't routed through here - steam:// already works from the
+    /// native Linux side without Wine.
+    /// </summary>
+    public async Task<string?> LaunchAsync(string target)
+    {
+        if (!TryBuildStartInfo("launch", new[] { target }, out var startInfo))
+        {
+            return UnavailableReason ?? "Injector is unavailable.";
+        }
+
+        string? error = null;
+        using var process = new Process { StartInfo = startInfo };
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data != null && e.Data.StartsWith("ERROR "))
+            {
+                error = e.Data[6..];
+            }
+        };
+        process.Start();
+        process.BeginOutputReadLine();
+        await process.WaitForExitAsync();
+        return error;
+    }
+
     public void StopWatching()
     {
         try

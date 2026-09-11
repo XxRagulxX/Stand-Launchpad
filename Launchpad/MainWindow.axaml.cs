@@ -169,12 +169,26 @@ public partial class MainWindow : Window
         SaveSettings();
     }
 
-    private void LaunchBtn_Click(object? sender, RoutedEventArgs e)
+    private async void LaunchBtn_Click(object? sender, RoutedEventArgs e)
     {
-        if (LauncherType.SelectedItem is LauncherOption option)
+        if (LauncherType.SelectedItem is not LauncherOption option)
+        {
+            return;
+        }
+
+        // Steam's protocol handler works natively on Linux without Wine; on
+        // Windows everything goes through the same native code path. Only
+        // Epic/Rockstar on Linux need to run inside the Proton prefix.
+        if (option.Id == LauncherId.Steam || OperatingSystem.IsWindows())
         {
             GameLauncher.Launch(option.Id, error => InfoText.Text = error);
+            return;
         }
+
+        InfoText.Text = "Launching...";
+        var target = option.Id == LauncherId.EpicGames ? "epic" : "rockstar";
+        var error = await _injector.LaunchAsync(target);
+        InfoText.Text = error ?? "Launched.";
     }
 
     private void LauncherType_SelectionChanged(object? sender, SelectionChangedEventArgs e) => SaveSettings();

@@ -44,6 +44,18 @@ Output lands in `build/publish/` — `Launchpad`/`Launchpad.exe` alongside an
   under `wine` with `WINEPREFIX` set to that prefix, so it sees the game's
   actual Windows process table.
 
+## Launching through Epic Games / Rockstar Games on Linux
+
+Steam's `steam://` protocol works natively on Linux without Wine. Epic
+Games and Rockstar Games don't have native Linux clients, so - same idea as
+injection - the injector runs their registry lookups/protocol calls *inside*
+the GTA V Proton prefix instead. This only works if you've installed the
+Epic Games Launcher or Rockstar Games Launcher into that same prefix (the
+standard setup for running the Epic/Rockstar editions of GTA V on Linux,
+since GTA5.exe needs its parent launcher present there to run at all). If
+neither is installed in the prefix, the launch button reports why it
+failed rather than doing nothing silently.
+
 There's no bundled DLL and no version/update checking against any server —
 add whichever DLL(s) you want injected via the "Add..." button, tick the
 ones you want active, and hit Inject once the game is running.
