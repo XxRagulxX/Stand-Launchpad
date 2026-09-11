@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -31,6 +32,9 @@ public partial class MainWindow : Window
         AutoInjectCheckBox.IsChecked = _settings.AutoInject;
         AutoInjectDelaySeconds.Value = _settings.AutoInjectDelaySeconds;
 
+        // Restore advanced state (matches original: Properties.Settings.Default.Advanced)
+        AdvancedPanel.IsVisible = _settings.Advanced;
+
         _autoInjectTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _autoInjectTimer.Tick += AutoInjectTimer_Tick;
 
@@ -52,7 +56,7 @@ public partial class MainWindow : Window
             if (AutoInjectCheckBox.IsChecked == true && _autoInjectArmed)
             {
                 var delay = (int)(AutoInjectDelaySeconds.Value ?? 0);
-                if (delay > 0)
+                if (_settings.Advanced && delay > 0)
                 {
                     InfoText.Text = "Automatically injecting in a few seconds...";
                     _autoInjectTimer.Interval = TimeSpan.FromSeconds(delay);
@@ -90,11 +94,11 @@ public partial class MainWindow : Window
         _ = InjectAsync();
     }
 
+    // Mirrors original toggleInjectOrLaunchBtn — only launch row toggles
     private void ToggleInjectOrLaunch(bool gameRunning)
     {
         InjectBtn.IsVisible = gameRunning;
-        LauncherType.IsVisible = !gameRunning;
-        LaunchBtn.IsVisible = !gameRunning;
+        LaunchRow.IsVisible = !gameRunning;
     }
 
     private async void InjectBtn_Click(object? sender, RoutedEventArgs e) => await InjectAsync();
@@ -103,6 +107,7 @@ public partial class MainWindow : Window
     {
         if (_gtaPid == 0) return;
 
+        _autoInjectTimer.Stop();
         InjectBtn.IsEnabled = false;
         InfoText.Text = "Injecting...";
 
@@ -135,6 +140,20 @@ public partial class MainWindow : Window
         SaveSettings();
     }
 
+    private void DelayUpBtn_Click(object? sender, RoutedEventArgs e)
+    {
+        if ((AutoInjectDelaySeconds.Value ?? 0) < 60)
+            AutoInjectDelaySeconds.Value = (AutoInjectDelaySeconds.Value ?? 0) + 1;
+        SaveSettings();
+    }
+
+    private void DelayDownBtn_Click(object? sender, RoutedEventArgs e)
+    {
+        if ((AutoInjectDelaySeconds.Value ?? 0) > 0)
+            AutoInjectDelaySeconds.Value = (AutoInjectDelaySeconds.Value ?? 0) - 1;
+        SaveSettings();
+    }
+
     private void UpBtn_Click(object? sender, RoutedEventArgs e) => MoveSelected(-1);
     private void DownBtn_Click(object? sender, RoutedEventArgs e) => MoveSelected(1);
 
@@ -158,6 +177,23 @@ public partial class MainWindow : Window
         InfoText.Text = "Launching...";
         var error = await _injector.LaunchAsync(option.Id);
         InfoText.Text = error ?? "Launched.";
+    }
+
+    // Mirrors original AdvancedBtn_Click — toggles right panel, persists state, no text change
+    private void AdvancedBtn_Click(object? sender, RoutedEventArgs e)
+    {
+        AdvancedPanel.IsVisible = !AdvancedPanel.IsVisible;
+        _settings.Advanced = AdvancedPanel.IsVisible;
+        SaveSettings();
+    }
+
+    private void OpenStandFolderBtn_Click(object? sender, RoutedEventArgs e)
+    {
+        var path = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "StandEnhanced");
+        Directory.CreateDirectory(path);
+        Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
     }
 
     private void LauncherType_SelectionChanged(object? sender, SelectionChangedEventArgs e) => SaveSettings();

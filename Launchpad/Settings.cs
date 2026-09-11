@@ -21,6 +21,7 @@ internal sealed class LaunchpadSettings
     public int AutoInjectDelaySeconds { get; set; }
     public LauncherId GameLauncher { get; set; } = LauncherId.Steam;
     public List<DllEntry> Dlls { get; set; } = new();
+    public bool Advanced { get; set; }
 
     private static string SettingsPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

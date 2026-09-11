@@ -3,50 +3,95 @@
         xmlns:local="using:Launchpad"
         x:Class="Launchpad.MainWindow"
         Title="Stand Launchpad"
-        Width="420" Height="384"
+        SizeToContent="WidthAndHeight"
         CanResize="False">
-    <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+    <!--
+        Two-column layout matching original Stand Launchpad 1.9.3 (senpai branch):
+          Left col (235 px fixed) : always visible — launch/inject, checkbox, folder, advanced, status
+          Right col (Auto)        : AdvancedPanel — delay row + DLL list (hidden until Advanced clicked)
+    -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="270" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
 
-        <!-- Row 0: Inject / Launch -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,*">
-            <Button x:Name="InjectBtn" Grid.Column="0" Content="Inject" HorizontalAlignment="Stretch"
-                    Click="InjectBtn_Click" IsVisible="False" />
-            <ComboBox x:Name="LauncherType" Grid.Column="0" HorizontalAlignment="Stretch"
-                      DisplayMemberBinding="{Binding Name}"
-                      SelectionChanged="LauncherType_SelectionChanged" />
-            <Button x:Name="LaunchBtn" Grid.Column="1" Content="Launch" Margin="6,0,0,0"
-                    HorizontalAlignment="Stretch" Click="LaunchBtn_Click" />
-        </Grid>
+        <!-- ── Left column ─────────────────────────────────────────────── -->
+        <StackPanel Grid.Column="0" Margin="12" Spacing="6">
 
-        <!-- Row 1: auto-inject options -->
-        <StackPanel Grid.Row="1" Margin="0,8,0,0" Spacing="6">
-            <CheckBox x:Name="AutoInjectCheckBox" Content="Auto-inject when game starts"
-                      Checked="AutoInjectCheckBox_Changed" Unchecked="AutoInjectCheckBox_Changed" />
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="Inject delay (seconds):" VerticalAlignment="Center" />
-                <NumericUpDown x:Name="AutoInjectDelaySeconds" Minimum="0" Maximum="300" Width="130" />
-            </StackPanel>
+            <!-- Row 1: InjectBtn (game running) OR LaunchBtn + ComboBox -->
+            <Grid>
+                <Grid x:Name="LaunchRow" ColumnDefinitions="Auto,*">
+                    <Button x:Name="LaunchBtn" Grid.Column="0" Content="Launch"
+                            Margin="0,0,4,0" Click="LaunchBtn_Click"
+                            HorizontalContentAlignment="Left" />
+                    <ComboBox x:Name="LauncherType" Grid.Column="1"
+                              HorizontalAlignment="Stretch"
+                              DisplayMemberBinding="{Binding Name}"
+                              SelectionChanged="LauncherType_SelectionChanged" />
+                </Grid>
+                <Button x:Name="InjectBtn" Content="Inject" IsVisible="False"
+                        HorizontalAlignment="Stretch" Click="InjectBtn_Click"
+                        HorizontalContentAlignment="Left" />
+            </Grid>
+
+            <!-- Row 2: Auto-inject checkbox -->
+            <CheckBox x:Name="AutoInjectCheckBox"
+                      Content="Automatically inject when game starts."
+                      Checked="AutoInjectCheckBox_Changed"
+                      Unchecked="AutoInjectCheckBox_Changed" />
+
+            <!-- Row 3: Open Stand Folder -->
+            <Button Content="Open Stand Folder"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Click="OpenStandFolderBtn_Click" />
+
+            <!-- Row 4: Advanced toggle -->
+            <Button x:Name="AdvancedBtn" Content="Advanced"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Click="AdvancedBtn_Click" />
+
+            <!-- Row 5: Status -->
+            <TextBlock x:Name="InfoText"
+                       Text="Ready to inject; just start the game."
+                       TextWrapping="Wrap" />
+
         </StackPanel>
 
-        <!-- Row 2: DLL list -->
-        <ListBox x:Name="DllList" Grid.Row="2" Margin="0,8,0,0" SelectionMode="Multiple">
-            <ListBox.ItemTemplate>
-                <DataTemplate DataType="local:DllEntry" x:DataType="local:DllEntry">
-                    <CheckBox Content="{Binding Path}" IsChecked="{Binding Checked}" />
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <!-- ── Right column: Advanced panel ────────────────────────────── -->
+        <StackPanel x:Name="AdvancedPanel" Grid.Column="1"
+                    Margin="0,12,12,12" Spacing="6" IsVisible="False">
 
-        <!-- Row 3: DLL list controls -->
-        <Grid Grid.Row="3" Margin="0,6,0,0" ColumnDefinitions="*,*,*,*">
-            <Button Grid.Column="0" Content="Add..."  Click="AddBtn_Click"    HorizontalAlignment="Stretch" Margin="0,0,3,0" />
-            <Button Grid.Column="1" Content="Remove"  Click="RemoveBtn_Click" HorizontalAlignment="Stretch" Margin="3,0" />
-            <Button Grid.Column="2" Content="Up"      Click="UpBtn_Click"     HorizontalAlignment="Stretch" Margin="3,0" />
-            <Button Grid.Column="3" Content="Down"    Click="DownBtn_Click"   HorizontalAlignment="Stretch" Margin="3,0,0,0" />
-        </Grid>
+            <!-- Delay label + NUD + ↑↓ (control delay) + Add + Remove -->
+            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <TextBlock Text="Automatic Injection Delay (Seconds):"
+                           VerticalAlignment="Center" />
+                <NumericUpDown x:Name="AutoInjectDelaySeconds"
+                               Minimum="0" Maximum="60" Width="70"
+                               ShowButtonSpinner="False" />
+                <Button Content="↑" Click="DelayUpBtn_Click"   Padding="5,4" />
+                <Button Content="↓" Click="DelayDownBtn_Click" Padding="5,4" />
+                <Button Content="Add"    Click="AddBtn_Click"    Padding="8,4" />
+                <Button Content="Remove" Click="RemoveBtn_Click" Padding="8,4" />
+            </StackPanel>
 
-        <!-- Row 4: status -->
-        <TextBlock x:Name="InfoText" Grid.Row="4" Margin="0,8,0,0"
-                   Text="Ready to inject; just start the game." TextWrapping="Wrap" />
+            <!-- DLL list — 450 × 122 px, matching original ListView -->
+            <ListBox x:Name="DllList" Width="450" Height="122" SelectionMode="Multiple">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="local:DllEntry" x:DataType="local:DllEntry">
+                        <CheckBox Content="{Binding Path}" IsChecked="{Binding Checked}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- DLL reorder buttons (below the list) -->
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Button Content="Move Up"   Click="UpBtn_Click"   Padding="8,4" />
+                <Button Content="Move Down" Click="DownBtn_Click" Padding="8,4" />
+            </StackPanel>
+
+        </StackPanel>
     </Grid>
 </Window>
