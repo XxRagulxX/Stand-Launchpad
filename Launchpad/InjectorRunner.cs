@@ -148,13 +148,14 @@ internal sealed class InjectorRunner
             var prefix = ProtonPrefix.Find(_settings);
             if (prefix == null)
             {
-                UnavailableReason = "Couldn't find GTA V's Proton prefix. Launch the game at least once via Steam, " +
-                                     "or set a custom prefix path in settings.";
+                UnavailableReason = "Couldn't find the Wine prefix. Set it manually in the \"Wine prefix\" field, " +
+                                     "or copy the WinePrefix folder path from Heroic / Steam / Lutris.";
                 startInfo = null!;
                 return false;
             }
 
-            startInfo = new ProcessStartInfo("wine")
+            var wineBin = FindWineBinary();
+            startInfo = new ProcessStartInfo(wineBin)
             {
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
@@ -171,5 +172,57 @@ internal sealed class InjectorRunner
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Resolves the wine binary to use. Priority:
+    ///   1. User override in settings
+    ///   2. Heroic Games Launcher Proton/Wine installations (auto-detected)
+    ///   3. System `wine`
+    /// Using the same wine/Proton binary that launched the game is critical:
+    /// only processes sharing the same wineserver are visible to each other,
+    /// and each wine version ships its own wineserver binary.
+    /// </summary>
+    private string FindWineBinary()
+    {
+        if (!string.IsNullOrWhiteSpace(_settings.WinePathOverride) && File.Exists(_settings.WinePathOverride))
+        {
+            return _settings.WinePathOverride;
+        }
+
+        // Heroic stores its wine/proton tools at ~/.config/heroic/tools/
+        // (NOT ~/.local/share - verified against Heroic 2.x config.json).
+        var heroicTools = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "heroic", "tools");
+
+        // Proton installs: ~/.config/heroic/tools/proton/<name>/files/bin/wine
+        var protonRoot = Path.Combine(heroicTools, "proton");
+        if (Directory.Exists(protonRoot))
+        {
+            // Sort descending so "GE-Proton-latest" symlink sorts before versioned dirs.
+            foreach (var dir in Directory.GetDirectories(protonRoot).OrderByDescending(d => d))
+            {
+                var w64 = Path.Combine(dir, "files", "bin", "wine64");
+                if (File.Exists(w64)) return w64;
+                var w = Path.Combine(dir, "files", "bin", "wine");
+                if (File.Exists(w)) return w;
+            }
+        }
+
+        // Wine installs: ~/.config/heroic/tools/wine/<name>/bin/wine
+        var wineRoot = Path.Combine(heroicTools, "wine");
+        if (Directory.Exists(wineRoot))
+        {
+            foreach (var dir in Directory.GetDirectories(wineRoot).OrderByDescending(d => d))
+            {
+                var w64 = Path.Combine(dir, "bin", "wine64");
+                if (File.Exists(w64)) return w64;
+                var w = Path.Combine(dir, "bin", "wine");
+                if (File.Exists(w)) return w;
+            }
+        }
+
+        return "wine";
     }
 }

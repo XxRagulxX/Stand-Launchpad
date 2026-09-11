@@ -66,6 +66,29 @@ internal static class ProtonPrefix
             }
         }
 
+        // Heroic Games Launcher: prefixes live at ~/Games/Heroic/Prefixes/<name>/
+        // (not in a "pfx" subfolder - the directory itself IS the WINEPREFIX).
+        // The base path is configurable; we check the default and one common alt.
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        foreach (var heroicBase in new[]
+        {
+            Path.Combine(home, "Games", "Heroic", "Prefixes"),
+            Path.Combine(home, "heroic", "Prefixes"),
+        })
+        {
+            if (!Directory.Exists(heroicBase)) continue;
+
+            foreach (var name in new[]
+            {
+                "Rockstar Games", "Rockstar", "GTA V Enhanced",
+                "Grand Theft Auto V Enhanced", "Grand Theft Auto V", "GTA V",
+            })
+            {
+                var candidate = Path.Combine(heroicBase, name);
+                if (Directory.Exists(candidate)) return candidate;
+            }
+        }
+
         return null;
     }
 

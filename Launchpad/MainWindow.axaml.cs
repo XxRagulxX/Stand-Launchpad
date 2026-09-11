@@ -31,15 +31,17 @@ public partial class MainWindow : Window
         AutoInjectCheckBox.IsChecked = _settings.AutoInject;
         AutoInjectDelaySeconds.Value = _settings.AutoInjectDelaySeconds;
 
-        // Proton prefix row is only relevant on Linux.
+        // Wine prefix/binary rows are only relevant on Linux.
         if (OperatingSystem.IsWindows())
         {
-            ProtonPrefixRow.IsVisible = false;
-            Height -= 40;
+            WinePrefixRow.IsVisible = false;
+            WineBinaryRow.IsVisible = false;
+            Height -= 80;
         }
         else
         {
             ProtonPrefixBox.Text = _settings.ProtonPrefixOverride ?? string.Empty;
+            WineBinaryBox.Text = _settings.WinePathOverride ?? string.Empty;
         }
 
         _autoInjectTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
@@ -214,18 +216,34 @@ public partial class MainWindow : Window
     }
 
     private void ProtonPrefixBox_LostFocus(object? sender, RoutedEventArgs e) => SaveSettings();
+    private void WineBinaryBox_LostFocus(object? sender, RoutedEventArgs e) => SaveSettings();
 
     private async void ProtonPrefixBrowse_Click(object? sender, RoutedEventArgs e)
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Select Proton prefix folder (the 'pfx' directory)",
+            Title = "Select Wine prefix folder (shown as 'WinePrefix folder' in Heroic)",
             AllowMultiple = false,
         });
 
         if (folders.Count > 0)
         {
             ProtonPrefixBox.Text = folders[0].Path.LocalPath;
+            SaveSettings();
+        }
+    }
+
+    private async void WineBinaryBrowse_Click(object? sender, RoutedEventArgs e)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Select wine or wine64 binary (e.g. from Heroic's tools/proton folder)",
+            AllowMultiple = false,
+        });
+
+        if (files.Count > 0)
+        {
+            WineBinaryBox.Text = files[0].Path.LocalPath;
             SaveSettings();
         }
     }
@@ -244,6 +262,9 @@ public partial class MainWindow : Window
             _settings.ProtonPrefixOverride = string.IsNullOrWhiteSpace(ProtonPrefixBox.Text)
                 ? null
                 : ProtonPrefixBox.Text.Trim();
+            _settings.WinePathOverride = string.IsNullOrWhiteSpace(WineBinaryBox.Text)
+                ? null
+                : WineBinaryBox.Text.Trim();
         }
         _settings.Save();
     }

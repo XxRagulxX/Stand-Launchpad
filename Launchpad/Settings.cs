@@ -28,6 +28,12 @@ internal sealed class LaunchpadSettings
     public LauncherId GameLauncher { get; set; } = LauncherId.Steam;
     public List<DllEntry> Dlls { get; set; } = new();
     public string? ProtonPrefixOverride { get; set; }
+    /// <summary>
+    /// Full path to the wine/wine64 binary to use on Linux. When empty,
+    /// InjectorRunner auto-detects Heroic Games Launcher's Proton-GE, then
+    /// falls back to the system `wine`.
+    /// </summary>
+    public string? WinePathOverride { get; set; }
 
     private static string SettingsPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Launchpad", "settings.json");

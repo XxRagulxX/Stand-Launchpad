@@ -49,16 +49,67 @@ internal static class StorefrontLauncher
     {
         try
         {
-            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Rockstar Games\Grand Theft Auto V");
-            var path = key?.GetValue("InstallFolder") as string;
-            if (path == null)
+            // Try registry keys: original GTA V, Enhanced edition, and 64-bit hive variants.
+            string? installPath = null;
+            string[] regKeys =
             {
-                error = "Couldn't find the Rockstar Games installation in this prefix.";
-                return false;
+                @"SOFTWARE\WOW6432Node\Rockstar Games\Grand Theft Auto V",
+                @"SOFTWARE\WOW6432Node\Rockstar Games\Grand Theft Auto V Enhanced",
+                @"SOFTWARE\Rockstar Games\Grand Theft Auto V",
+                @"SOFTWARE\Rockstar Games\Grand Theft Auto V Enhanced",
+            };
+            foreach (var regKey in regKeys)
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(regKey);
+                if (key?.GetValue("InstallFolder") is string p) { installPath = p; break; }
             }
-            Process.Start(Path.Combine(path, "PlayGTAV.exe"));
-            error = null;
-            return true;
+
+            if (installPath != null)
+            {
+                // Try the play launcher executable; Enhanced uses the same name.
+                foreach (var exe in new[] { "PlayGTAV.exe", "GTAVLauncher.exe" })
+                {
+                    var full = Path.Combine(installPath, exe);
+                    if (File.Exists(full))
+                    {
+                        Process.Start(full);
+                        error = null;
+                        return true;
+                    }
+                }
+            }
+
+            // Registry not found or exe missing: scan common Rockstar install paths.
+            string[] searchRoots = {
+                @"C:\Program Files\Rockstar Games",
+                @"C:\Program Files (x86)\Rockstar Games",
+            };
+            string[] gameDirs = {
+                "Grand Theft Auto V Enhanced",
+                "Grand Theft Auto V",
+            };
+            string[] exeNames = { "PlayGTAV.exe", "GTAVLauncher.exe" };
+            foreach (var root in searchRoots)
+            {
+                foreach (var gameDir in gameDirs)
+                {
+                    foreach (var exeName in exeNames)
+                    {
+                        var full = Path.Combine(root, gameDir, exeName);
+                        if (File.Exists(full))
+                        {
+                            Process.Start(full);
+                            error = null;
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            error = "Couldn't find GTA V in the registry or at common install paths. " +
+                    "Start the game manually from the Rockstar Games Launcher — " +
+                    "Launchpad will inject when it detects GTA5.exe.";
+            return false;
         }
         catch (Exception ex)
         {
