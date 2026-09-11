@@ -3,9 +3,9 @@
         xmlns:local="using:Launchpad"
         x:Class="Launchpad.MainWindow"
         Title="Launchpad"
-        Width="420" Height="360"
+        Width="420" Height="420"
         CanResize="False">
-    <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+    <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto">
 
         <!-- Row 0: Inject / Launch -->
         <Grid Grid.Row="0" ColumnDefinitions="*,*">
@@ -46,5 +46,14 @@
 
         <!-- Row 4: status -->
         <TextBlock x:Name="InfoText" Grid.Row="4" Margin="0,8,0,0" Text="Ready to inject; just start the game." TextWrapping="Wrap" />
+
+        <!-- Row 5: Proton prefix override (Linux only — hidden on Windows in code-behind) -->
+        <Grid x:Name="ProtonPrefixRow" Grid.Row="5" Margin="0,8,0,0" ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Grid.Column="0" Text="Proton prefix:" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <TextBox x:Name="ProtonPrefixBox" Grid.Column="1" Watermark="Auto-detect" VerticalAlignment="Center"
+                     LostFocus="ProtonPrefixBox_LostFocus" />
+            <Button Grid.Column="2" Content="Browse…" Margin="6,0,0,0"
+                    Click="ProtonPrefixBrowse_Click" />
+        </Grid>
     </Grid>
 </Window>

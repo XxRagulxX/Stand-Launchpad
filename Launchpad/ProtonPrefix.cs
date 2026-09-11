@@ -1,14 +1,21 @@
 namespace Launchpad;
 
 /// <summary>
-/// Locates the Wine/Proton prefix Steam created for GTA V (app id 271590),
-/// so the Injector can be run inside the exact same WINEPREFIX the game
-/// process itself lives in - a generic system Wine won't see the game's
-/// process table.
+/// Locates the Wine/Proton prefix Steam created for GTA V, so the Injector
+/// can be run inside the exact same WINEPREFIX the game process itself lives
+/// in - a generic system Wine won't see the game's process table.
+///
+/// Searched App IDs (first match wins):
+///   271590  – GTA V (original Steam release)
+///   2060170 – GTA V Enhanced (standalone Steam entry)
+///   1404890 – Rockstar Games Launcher on Steam (hosts GTA V Enhanced when
+///              launched through the Rockstar store or Rockstar Launcher)
 /// </summary>
 internal static class ProtonPrefix
 {
-    private const string GtaVAppId = "271590";
+    // Priority order: most-specific first so we prefer the actual game prefix
+    // over the launcher prefix when both exist.
+    private static readonly string[] AppIds = { "271590", "2060170", "1404890" };
 
     private static readonly string[] SteamRoots =
     {
@@ -28,31 +35,33 @@ internal static class ProtonPrefix
             return settings.ProtonPrefixOverride;
         }
 
-        foreach (var root in SteamRoots)
+        foreach (var appId in AppIds)
         {
-            var expanded = Expand(root);
-            var candidate = Path.Combine(expanded, "steamapps", "compatdata", GtaVAppId, "pfx");
-            if (Directory.Exists(candidate))
+            foreach (var root in SteamRoots)
             {
-                return candidate;
-            }
-        }
-
-        // Steam can also point library folders elsewhere; check libraryfolders.vdf.
-        foreach (var root in SteamRoots)
-        {
-            var vdf = Path.Combine(Expand(root), "steamapps", "libraryfolders.vdf");
-            if (!File.Exists(vdf))
-            {
-                continue;
-            }
-
-            foreach (var libraryPath in ParseLibraryPaths(vdf))
-            {
-                var candidate = Path.Combine(libraryPath, "steamapps", "compatdata", GtaVAppId, "pfx");
+                var candidate = Path.Combine(Expand(root), "steamapps", "compatdata", appId, "pfx");
                 if (Directory.Exists(candidate))
                 {
                     return candidate;
+                }
+            }
+
+            // Steam can also point library folders elsewhere; check libraryfolders.vdf.
+            foreach (var root in SteamRoots)
+            {
+                var vdf = Path.Combine(Expand(root), "steamapps", "libraryfolders.vdf");
+                if (!File.Exists(vdf))
+                {
+                    continue;
+                }
+
+                foreach (var libraryPath in ParseLibraryPaths(vdf))
+                {
+                    var candidate = Path.Combine(libraryPath, "steamapps", "compatdata", appId, "pfx");
+                    if (Directory.Exists(candidate))
+                    {
+                        return candidate;
+                    }
                 }
             }
         }

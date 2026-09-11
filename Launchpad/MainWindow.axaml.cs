@@ -31,6 +31,17 @@ public partial class MainWindow : Window
         AutoInjectCheckBox.IsChecked = _settings.AutoInject;
         AutoInjectDelaySeconds.Value = _settings.AutoInjectDelaySeconds;
 
+        // Proton prefix row is only relevant on Linux.
+        if (OperatingSystem.IsWindows())
+        {
+            ProtonPrefixRow.IsVisible = false;
+            Height -= 40;
+        }
+        else
+        {
+            ProtonPrefixBox.Text = _settings.ProtonPrefixOverride ?? string.Empty;
+        }
+
         _autoInjectTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _autoInjectTimer.Tick += AutoInjectTimer_Tick;
 
@@ -202,6 +213,23 @@ public partial class MainWindow : Window
         SaveSettings();
     }
 
+    private void ProtonPrefixBox_LostFocus(object? sender, RoutedEventArgs e) => SaveSettings();
+
+    private async void ProtonPrefixBrowse_Click(object? sender, RoutedEventArgs e)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select Proton prefix folder (the 'pfx' directory)",
+            AllowMultiple = false,
+        });
+
+        if (folders.Count > 0)
+        {
+            ProtonPrefixBox.Text = folders[0].Path.LocalPath;
+            SaveSettings();
+        }
+    }
+
     private void SaveSettings()
     {
         _settings.AutoInject = AutoInjectCheckBox.IsChecked == true;
@@ -211,6 +239,12 @@ public partial class MainWindow : Window
             _settings.GameLauncher = option.Id;
         }
         _settings.Dlls = _dlls.ToList();
+        if (!OperatingSystem.IsWindows())
+        {
+            _settings.ProtonPrefixOverride = string.IsNullOrWhiteSpace(ProtonPrefixBox.Text)
+                ? null
+                : ProtonPrefixBox.Text.Trim();
+        }
         _settings.Save();
     }
 }
