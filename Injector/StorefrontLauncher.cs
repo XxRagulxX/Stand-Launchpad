@@ -66,7 +66,7 @@ internal static class StorefrontLauncher
             if (installPath != null)
             {
                 // Try the play launcher executable; Enhanced uses the same name.
-                foreach (var exe in new[] { "PlayGTAV.exe", "GTAVLauncher.exe" })
+                foreach (var exe in new[] { "PlayGTAV.exe", "GTA5_Enhanced.exe" })
                 {
                     var full = Path.Combine(installPath, exe);
                     if (File.Exists(full))
@@ -87,7 +87,7 @@ internal static class StorefrontLauncher
                 "Grand Theft Auto V Enhanced",
                 "Grand Theft Auto V",
             };
-            string[] exeNames = { "PlayGTAV.exe", "GTAVLauncher.exe" };
+            string[] exeNames = { "PlayGTAV.exe", "GTA5_Enhanced.exe" };
             foreach (var root in searchRoots)
             {
                 foreach (var gameDir in gameDirs)
