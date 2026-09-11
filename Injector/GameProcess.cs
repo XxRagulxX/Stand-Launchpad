@@ -4,10 +4,10 @@ namespace Launchpad.Injector;
 
 internal static class GameProcess
 {
-    private const string ProcessName = "GTA5";
+    private const string ProcessName = "GTA5_Enhanced";
 
     /// <summary>
-    /// Finds the running GTA5 process id, or 0 if it isn't running.
+    /// Finds the running GTA5_Enhanced process id, or 0 if it isn't running.
     ///
     /// Must run from inside the same Windows/Wine process table as the game:
     /// on Linux the caller launches this whole executable under `wine`
