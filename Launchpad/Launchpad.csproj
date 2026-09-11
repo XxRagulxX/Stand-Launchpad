@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <RootNamespace>Launchpad</RootNamespace>
     <AssemblyName>Launchpad</AssemblyName>
     <Nullable>enable</Nullable>
@@ -19,17 +20,14 @@
     <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
-    <!-- Pin the transitive dep Avalonia's Linux D-Bus interop pulls in: 0.20.0
-         has a known high-severity DoS (GHSA-xrw6-gwf8-vvr9), fixed in 0.21.3. -->
+    <!-- Avalonia.Desktop pulls this in transitively; 0.20.0 has a known DoS vuln. -->
     <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
   </ItemGroup>
 
   <ItemGroup>
     <!--
-      Launchpad.Injector is always built for win-x64 and is either run
-      directly (native Windows) or via `wine` (Linux). It ships alongside
-      this executable rather than being referenced as a library, because it
-      must run as its own Windows/Wine process.
+      Launchpad.Injector ships alongside this executable so they run in the
+      same Windows/Wine process space. Both are win-x64 .exe files.
     -->
     <None Include="../Injector/bin/$(Configuration)/net10.0-windows/win-x64/publish/**"
           Condition="Exists('../Injector/bin/$(Configuration)/net10.0-windows/win-x64/publish')">

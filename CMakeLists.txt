@@ -11,15 +11,9 @@ project(Launchpad NONE)
 
 set(LAUNCHPAD_CONFIGURATION "Release" CACHE STRING "Build configuration (Debug/Release)")
 
-if(WIN32)
-    set(LAUNCHPAD_UI_RID "win-x64" CACHE STRING "RID for the Launchpad UI publish")
-else()
-    set(LAUNCHPAD_UI_RID "linux-x64" CACHE STRING "RID for the Launchpad UI publish")
-endif()
-
-# The injector is a Windows/Wine-only binary regardless of host OS: on
-# Linux it still gets built for win-x64 and is invoked through `wine`.
-set(LAUNCHPAD_INJECTOR_RID "win-x64")
+# Both projects publish as win-x64 .exe files.
+# On Linux, run Launchpad.exe through Heroic / Wine the same way the game runs.
+set(LAUNCHPAD_RID "win-x64")
 
 set(LAUNCHPAD_OUT "${CMAKE_BINARY_DIR}/publish")
 
@@ -30,9 +24,9 @@ set(LAUNCHPAD_OUT "${CMAKE_BINARY_DIR}/publish")
 add_custom_target(injector ALL
     COMMAND dotnet publish "${CMAKE_SOURCE_DIR}/Injector/Injector.csproj"
             -c ${LAUNCHPAD_CONFIGURATION}
-            -r ${LAUNCHPAD_INJECTOR_RID}
+            -r ${LAUNCHPAD_RID}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Publishing Launchpad.Injector (win-x64, runs directly on Windows or via wine on Linux)"
+    COMMENT "Publishing Launchpad.Injector (${LAUNCHPAD_RID})"
     VERBATIM
 )
 
@@ -40,10 +34,10 @@ add_custom_target(injector ALL
 add_custom_target(launchpad ALL
     COMMAND dotnet publish "${CMAKE_SOURCE_DIR}/Launchpad/Launchpad.csproj"
             -c ${LAUNCHPAD_CONFIGURATION}
-            -r ${LAUNCHPAD_UI_RID}
+            -r ${LAUNCHPAD_RID}
             -o "${LAUNCHPAD_OUT}"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Publishing Launchpad UI (${LAUNCHPAD_UI_RID})"
+    COMMENT "Publishing Launchpad UI (${LAUNCHPAD_RID})"
     VERBATIM
 )
 add_dependencies(launchpad injector)
