@@ -1,61 +1,74 @@
-# Launchpad
+# Stand Launchpad
 
-A cross-platform DLL injector/launcher for GTA V. Pick your own DLL(s) from
-disk, inject them into a running game process, and optionally launch the
-game through Steam / Epic Games / Rockstar Games.
+A DLL injector and game launcher for **GTA V Enhanced**. Pick your DLL(s),
+launch the game through Steam / Epic Games / Rockstar Games, and inject
+automatically when the process starts — or manually with one click.
 
-Runs natively on Windows, and natively on Linux against a Steam Play
-(Proton) install — no Wine needed for the UI itself.
+Works natively on **Windows** and on **Linux via Steam Play (Proton)** —
+Avalonia's self-contained Skia renderer means no extra runtime is needed in
+either environment.
+
+## Features
+
+- **Auto-inject** — watches for `GTA5_Enhanced.exe` and injects the moment it
+  appears, with an optional configurable delay.
+- **Multi-DLL list** — add any number of DLLs, toggle each on/off with a
+  checkbox, reorder with Move Up / Move Down.
+- **Launcher support** — starts GTA V through Steam (`steam://`), Epic Games,
+  or Rockstar Games from the same window.
+- **Open Stand Folder** — quick shortcut to `%AppData%\StandEnhanced\`.
+- **Settings persistence** — all choices saved automatically to
+  `%AppData%\Launchpad\settings.json`.
+
+## Download
+
+Grab the latest `Launchpad.exe` from the
+[Releases](../../releases) page. No installer, no runtime to install — just
+run it.
+
+## Building from source
+
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/).
+
+```sh
+dotnet publish Launchpad/Launchpad.csproj -c Release -r win-x64 -o publish
+```
+
+Output is a single `publish/Launchpad.exe` (~19 MB, fully self-contained).
 
 ## Project layout
 
 ```
-CMakeLists.txt      orchestrates `dotnet build/publish`, replaces the old .sln
-Injector/           Windows-only console app; the sole P/Invoke surface
-                     (VirtualAllocEx/WriteProcessMemory/CreateRemoteThread).
-                     On Linux it runs via `wine` inside the game's Proton
-                     prefix, since injection has to happen inside the same
-                     Windows/Wine process & memory space as the target.
-Launchpad/           Avalonia UI, builds and runs natively on both Windows
-                     and Linux. Never P/Invokes directly - it drives
-                     Injector as a child process instead.
+Launchpad/
+  Launchpad.csproj       .NET 10 / Avalonia, win-x64 self-contained single-file
+  MainWindow.axaml        UI layout (two-column: controls | Advanced panel)
+  MainWindow.axaml.cs     Event handlers, game-watch loop, auto-inject logic
+  DllInjector.cs          VirtualAllocEx / WriteProcessMemory / CreateRemoteThread
+  GameProcess.cs          Finds GTA5_Enhanced.exe by process name
+  InjectorRunner.cs       Bridges UI ↔ injector; background watch task
+  StorefrontLauncher.cs   Steam URL / Epic URL / Rockstar registry launch
+  Settings.cs             JSON settings (source-generated, trim-safe)
+  GameLauncher.cs         Launcher option list
+  NativeMethods.cs        kernel32 P/Invoke declarations
+.github/workflows/
+  release.yml             Manual-trigger workflow → single-file exe → GitHub Release
 ```
-
-## Building
-
-Requires the [.NET 10 SDK](https://dotnet.microsoft.com/) and CMake 3.20+.
-On Linux, injection additionally requires `wine` to be installed (the UI
-itself needs no Wine dependency).
-
-```sh
-cmake -B build
-cmake --build build
-```
-
-Output lands in `build/publish/` — `Launchpad`/`Launchpad.exe` alongside an
-`Injector/` subfolder containing the injector.
 
 ## How injection works
 
-- **Windows**: the UI runs `Injector/Launchpad.Injector.exe` directly.
-- **Linux**: the UI locates the Proton prefix Steam created for GTA V
-  (`steamapps/compatdata/271590/pfx`, auto-detected from common Steam
-  install locations, or overridden via settings) and runs the injector
-  under `wine` with `WINEPREFIX` set to that prefix, so it sees the game's
-  actual Windows process table.
+Injection runs in-process via the classic `LoadLibraryW` remote-thread
+technique:
 
-## Launching through Epic Games / Rockstar Games on Linux
+1. `OpenProcess` with VM + thread rights on the GTA V pid.
+2. `VirtualAllocEx` — allocate a page in the target process.
+3. `WriteProcessMemory` — write the DLL path (wide string) into that page.
+4. `CreateRemoteThread(LoadLibraryW, &path)` — game loads the DLL.
 
-Steam's `steam://` protocol works natively on Linux without Wine. Epic
-Games and Rockstar Games don't have native Linux clients, so - same idea as
-injection - the injector runs their registry lookups/protocol calls *inside*
-the GTA V Proton prefix instead. This only works if you've installed the
-Epic Games Launcher or Rockstar Games Launcher into that same prefix (the
-standard setup for running the Epic/Rockstar editions of GTA V on Linux,
-since GTA5.exe needs its parent launcher present there to run at all). If
-neither is installed in the prefix, the launch button reports why it
-failed rather than doing nothing silently.
+Each DLL is staged to a temp copy first to avoid AV file-lock conflicts on
+the source path.
 
-There's no bundled DLL and no version/update checking against any server —
-add whichever DLL(s) you want injected via the "Add..." button, tick the
-ones you want active, and hit Inject once the game is running.
+## CI / Releases
+
+The [release workflow](.github/workflows/release.yml) is triggered manually
+from the Actions tab. Provide a version tag (e.g. `v1.2.3`) and it builds,
+packages, and publishes a GitHub Release with the single-file exe attached.
