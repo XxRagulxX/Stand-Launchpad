@@ -1,6 +1,11 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Launchpad;
+
+[JsonSerializable(typeof(LaunchpadSettings))]
+[JsonSourceGenerationOptions(WriteIndented = true)]
+internal partial class AppJsonContext : JsonSerializerContext { }
 
 internal enum LauncherId
 {
@@ -33,7 +38,7 @@ internal sealed class LaunchpadSettings
         {
             if (File.Exists(SettingsPath))
             {
-                var loaded = JsonSerializer.Deserialize<LaunchpadSettings>(File.ReadAllText(SettingsPath));
+                var loaded = JsonSerializer.Deserialize(File.ReadAllText(SettingsPath), AppJsonContext.Default.LaunchpadSettings);
                 if (loaded != null) return loaded;
             }
         }
@@ -45,6 +50,6 @@ internal sealed class LaunchpadSettings
     {
         var path = SettingsPath;
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(path, JsonSerializer.Serialize(this, AppJsonContext.Default.LaunchpadSettings));
     }
 }

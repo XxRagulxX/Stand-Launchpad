@@ -1,6 +1,9 @@
 namespace Launchpad;
 
-internal sealed record LauncherOption(LauncherId Id, string Name);
+internal sealed record LauncherOption(LauncherId Id, string Name)
+{
+    public override string ToString() => Name;
+}
 
 internal static class GameLauncher
 {

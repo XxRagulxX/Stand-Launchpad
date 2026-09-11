@@ -1,8 +1,7 @@
 name: Release
 
-# Manual only - this never runs on a push/PR. Trigger it from the Actions
-# tab (or `gh workflow run release.yml -f version=v1.2.3`) when you actually
-# want to cut a build and publish it as a GitHub Release.
+# Manual only - trigger from the Actions tab or:
+#   gh workflow run release.yml -f version=v1.2.3
 on:
   workflow_dispatch:
     inputs:
@@ -21,14 +20,7 @@ permissions:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        include:
-          - rid: win-x64
-            archive: zip
-          - rid: linux-x64
-            archive: tar.gz
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -36,28 +28,17 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Configure
-        run: cmake -B build -DLAUNCHPAD_UI_RID=${{ matrix.rid }}
+      - name: Publish
+        run: dotnet publish Launchpad/Launchpad.csproj -c Release -r win-x64 -o build/publish
 
-      - name: Build
-        run: cmake --build build --config Release
-
-      - name: Package (zip)
-        if: matrix.archive == 'zip'
-        run: |
-          cd build/publish
-          zip -r "../../Launchpad-${{ inputs.version }}-${{ matrix.rid }}.zip" .
-
-      - name: Package (tar.gz)
-        if: matrix.archive == 'tar.gz'
-        run: |
-          cd build/publish
-          tar -czf "../../Launchpad-${{ inputs.version }}-${{ matrix.rid }}.tar.gz" .
+      - name: Package
+        run: Compress-Archive -Path build/publish/* -DestinationPath "Launchpad-${{ inputs.version }}-win-x64.zip"
+        shell: pwsh
 
       - uses: actions/upload-artifact@v4
         with:
-          name: launchpad-${{ matrix.rid }}
-          path: Launchpad-${{ inputs.version }}-${{ matrix.rid }}.*
+          name: launchpad-win-x64
+          path: Launchpad-${{ inputs.version }}-win-x64.zip
           if-no-files-found: error
 
   release:

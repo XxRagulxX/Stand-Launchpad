@@ -11,10 +11,10 @@ public partial class MainWindow : Window
 {
     private readonly LaunchpadSettings _settings;
     private readonly InjectorRunner _injector;
-    private readonly ObservableCollection<DllEntry> _dlls = new();
+    private readonly ObservableCollection<DllEntry> _dlls;
     private readonly DispatcherTimer _autoInjectTimer;
 
-    private int _gtaPid;
+    private int  _gtaPid;
     private bool _autoInjectArmed = true;
 
     public MainWindow()
@@ -22,29 +22,29 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _settings = LaunchpadSettings.Load();
-        _dlls = new ObservableCollection<DllEntry>(_settings.Dlls);
+        _dlls     = new ObservableCollection<DllEntry>(_settings.Dlls);
         DllList.ItemsSource = _dlls;
 
         var launchers = GameLauncher.AvailableLaunchers;
-        LauncherType.ItemsSource = launchers;
+        LauncherType.ItemsSource  = launchers;
         LauncherType.SelectedItem = launchers.FirstOrDefault(l => l.Id == _settings.GameLauncher) ?? launchers[0];
 
-        AutoInjectCheckBox.IsChecked = _settings.AutoInject;
-        AutoInjectDelaySeconds.Value = _settings.AutoInjectDelaySeconds;
+        AutoInjectCheckBox.IsChecked   = _settings.AutoInject;
+        AutoInjectDelaySeconds.Value   = _settings.AutoInjectDelaySeconds;
+        AdvancedPanel.IsVisible        = _settings.Advanced;
 
-        // Restore advanced state (matches original: Properties.Settings.Default.Advanced)
-        AdvancedPanel.IsVisible = _settings.Advanced;
-
-        _autoInjectTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _autoInjectTimer      = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _autoInjectTimer.Tick += AutoInjectTimer_Tick;
 
-        _injector = new InjectorRunner();
+        _injector              = new InjectorRunner();
         _injector.GameStarted += OnGameStarted;
         _injector.GameStopped += OnGameStopped;
         _injector.StartWatching();
 
         Closing += (_, _) => { _injector.StopWatching(); SaveSettings(); };
     }
+
+    // ── Game state ────────────────────────────────────────────────────────────
 
     private void OnGameStarted(int pid)
     {
@@ -58,7 +58,7 @@ public partial class MainWindow : Window
                 var delay = (int)(AutoInjectDelaySeconds.Value ?? 0);
                 if (_settings.Advanced && delay > 0)
                 {
-                    InfoText.Text = "Automatically injecting in a few seconds...";
+                    InfoText.Text            = "Automatically injecting in a few seconds...";
                     _autoInjectTimer.Interval = TimeSpan.FromSeconds(delay);
                     _autoInjectTimer.Start();
                 }
@@ -94,12 +94,13 @@ public partial class MainWindow : Window
         _ = InjectAsync();
     }
 
-    // Mirrors original toggleInjectOrLaunchBtn — only launch row toggles
     private void ToggleInjectOrLaunch(bool gameRunning)
     {
-        InjectBtn.IsVisible = gameRunning;
-        LaunchRow.IsVisible = !gameRunning;
+        InjectBtn.IsVisible  = gameRunning;
+        LaunchRow.IsVisible  = !gameRunning;
     }
+
+    // ── Inject ────────────────────────────────────────────────────────────────
 
     private async void InjectBtn_Click(object? sender, RoutedEventArgs e) => await InjectAsync();
 
@@ -109,22 +110,25 @@ public partial class MainWindow : Window
 
         _autoInjectTimer.Stop();
         InjectBtn.IsEnabled = false;
-        InfoText.Text = "Injecting...";
+        InfoText.Text       = "Injecting...";
 
-        var dlls = _dlls.Where(d => d.Checked).Select(d => d.Path).ToList();
+        var dlls     = _dlls.Where(d => d.Checked).Select(d => d.Path).ToList();
+        string temp  = Path.Combine(Path.GetTempPath(), "LaunchpadInjector");
         int injected = await _injector.InjectAsync(_gtaPid, dlls, line => Console.WriteLine(line));
 
-        InfoText.Text = $"Injected {injected}/{dlls.Count} DLLs.";
+        InfoText.Text       = $"Injected {injected}/{dlls.Count} DLLs.";
         InjectBtn.IsEnabled = true;
     }
+
+    // ── DLL list ──────────────────────────────────────────────────────────────
 
     private async void AddBtn_Click(object? sender, RoutedEventArgs e)
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Select a DLL to inject",
-            AllowMultiple = true,
-            FileTypeFilter = new[] { new FilePickerFileType("DLL files") { Patterns = new[] { "*.dll" } } },
+            Title            = "Select a DLL to inject",
+            AllowMultiple    = true,
+            FileTypeFilter   = new[] { new FilePickerFileType("DLL files") { Patterns = new[] { "*.dll" } } },
         });
 
         foreach (var file in files)
@@ -140,6 +144,22 @@ public partial class MainWindow : Window
         SaveSettings();
     }
 
+    private void UpBtn_Click(object? sender, RoutedEventArgs e)   => MoveSelected(-1);
+    private void DownBtn_Click(object? sender, RoutedEventArgs e) => MoveSelected(1);
+
+    private void MoveSelected(int direction)
+    {
+        if (DllList.SelectedItems!.Count != 1) return;
+        int index    = _dlls.IndexOf((DllEntry)DllList.SelectedItems[0]!);
+        int newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= _dlls.Count) return;
+        _dlls.Move(index, newIndex);
+        DllList.SelectedIndex = newIndex;
+        SaveSettings();
+    }
+
+    // ── Delay ─────────────────────────────────────────────────────────────────
+
     private void DelayUpBtn_Click(object? sender, RoutedEventArgs e)
     {
         if ((AutoInjectDelaySeconds.Value ?? 0) < 60)
@@ -154,38 +174,26 @@ public partial class MainWindow : Window
         SaveSettings();
     }
 
-    private void UpBtn_Click(object? sender, RoutedEventArgs e) => MoveSelected(-1);
-    private void DownBtn_Click(object? sender, RoutedEventArgs e) => MoveSelected(1);
-
-    private void MoveSelected(int direction)
-    {
-        if (DllList.SelectedItems!.Count != 1) return;
-
-        int index = _dlls.IndexOf((DllEntry)DllList.SelectedItems[0]!);
-        int newIndex = index + direction;
-        if (newIndex < 0 || newIndex >= _dlls.Count) return;
-
-        _dlls.Move(index, newIndex);
-        DllList.SelectedIndex = newIndex;
-        SaveSettings();
-    }
+    // ── Launch ────────────────────────────────────────────────────────────────
 
     private async void LaunchBtn_Click(object? sender, RoutedEventArgs e)
     {
         if (LauncherType.SelectedItem is not LauncherOption option) return;
-
-        InfoText.Text = "Launching...";
-        var error = await _injector.LaunchAsync(option.Id);
-        InfoText.Text = error ?? "Launched.";
+        InfoText.Text  = "Launching...";
+        var error      = await _injector.LaunchAsync(option.Id);
+        InfoText.Text  = error ?? "Launched.";
     }
 
-    // Mirrors original AdvancedBtn_Click — toggles right panel, persists state, no text change
+    // ── Advanced panel ────────────────────────────────────────────────────────
+
     private void AdvancedBtn_Click(object? sender, RoutedEventArgs e)
     {
         AdvancedPanel.IsVisible = !AdvancedPanel.IsVisible;
-        _settings.Advanced = AdvancedPanel.IsVisible;
+        _settings.Advanced      = AdvancedPanel.IsVisible;
         SaveSettings();
     }
+
+    // ── Open Stand Folder ─────────────────────────────────────────────────────
 
     private void OpenStandFolderBtn_Click(object? sender, RoutedEventArgs e)
     {
@@ -195,6 +203,8 @@ public partial class MainWindow : Window
         Directory.CreateDirectory(path);
         Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
     }
+
+    // ── Settings persistence ──────────────────────────────────────────────────
 
     private void LauncherType_SelectionChanged(object? sender, SelectionChangedEventArgs e) => SaveSettings();
 
@@ -207,7 +217,7 @@ public partial class MainWindow : Window
 
     private void SaveSettings()
     {
-        _settings.AutoInject = AutoInjectCheckBox.IsChecked == true;
+        _settings.AutoInject             = AutoInjectCheckBox.IsChecked == true;
         _settings.AutoInjectDelaySeconds = (int)(AutoInjectDelaySeconds.Value ?? 0);
         if (LauncherType.SelectedItem is LauncherOption option)
             _settings.GameLauncher = option.Id;

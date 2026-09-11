@@ -7,7 +7,7 @@
         CanResize="False">
     <!--
         Two-column layout matching original Stand Launchpad 1.9.3 (senpai branch):
-          Left col (235 px fixed) : always visible — launch/inject, checkbox, folder, advanced, status
+          Left col (270 px fixed) : always visible — launch/inject, checkbox, folder, advanced, status
           Right col (Auto)        : AdvancedPanel — delay row + DLL list (hidden until Advanced clicked)
     -->
     <Grid>
@@ -27,8 +27,13 @@
                             HorizontalContentAlignment="Left" />
                     <ComboBox x:Name="LauncherType" Grid.Column="1"
                               HorizontalAlignment="Stretch"
-                              DisplayMemberBinding="{Binding Name}"
-                              SelectionChanged="LauncherType_SelectionChanged" />
+                              SelectionChanged="LauncherType_SelectionChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="local:LauncherOption">
+                                <TextBlock Text="{Binding Name}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </Grid>
                 <Button x:Name="InjectBtn" Content="Inject" IsVisible="False"
                         HorizontalAlignment="Stretch" Click="InjectBtn_Click"
@@ -71,8 +76,8 @@
                 <NumericUpDown x:Name="AutoInjectDelaySeconds"
                                Minimum="0" Maximum="60" Width="70"
                                ShowButtonSpinner="False" />
-                <Button Content="↑" Click="DelayUpBtn_Click"   Padding="5,4" />
-                <Button Content="↓" Click="DelayDownBtn_Click" Padding="5,4" />
+                <Button Content="+" Click="DelayUpBtn_Click"   Padding="5,4" />
+                <Button Content="-" Click="DelayDownBtn_Click" Padding="5,4" />
                 <Button Content="Add"    Click="AddBtn_Click"    Padding="8,4" />
                 <Button Content="Remove" Click="RemoveBtn_Click" Padding="8,4" />
             </StackPanel>
