@@ -53,9 +53,8 @@ internal static class StorefrontLauncher
             string? installPath = null;
             string[] regKeys =
             {
-                @"SOFTWARE\WOW6432Node\Rockstar Games\Grand Theft Auto V",
                 @"SOFTWARE\WOW6432Node\Rockstar Games\Grand Theft Auto V Enhanced",
-                @"SOFTWARE\Rockstar Games\Grand Theft Auto V",
+                @"SOFTWARE\Rockstar Games\GTAV Enhanced",
                 @"SOFTWARE\Rockstar Games\Grand Theft Auto V Enhanced",
             };
             foreach (var regKey in regKeys)

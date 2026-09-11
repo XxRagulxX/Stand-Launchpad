@@ -58,7 +58,7 @@ internal static class GameLauncher
         try
         {
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
-                @"SOFTWARE\WOW6432Node\Rockstar Games\Grand Theft Auto V");
+                @"SOFTWARE\WOW6432Node\Rockstar Games\GTAV Enhanced");
             var path = key?.GetValue("InstallFolder") as string;
             if (path != null)
             {
