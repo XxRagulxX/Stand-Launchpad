@@ -1,228 +1,57 @@
-using System.Diagnostics;
-
 namespace Launchpad;
 
 /// <summary>
-/// Runs Launchpad.Injector.exe as a child process - directly on Windows, or
-/// via `wine` against the game's Proton prefix on Linux. This is the only
-/// place the UI touches the injector; it never P/Invokes anything itself.
+/// Bridges the UI to the injection and game-watch logic.
+/// Everything runs in-process — no child exe, no stdout parsing.
 /// </summary>
 internal sealed class InjectorRunner
 {
     public event Action<int>? GameStarted;
     public event Action? GameStopped;
 
-    private readonly string _injectorPath;
-    private readonly LaunchpadSettings _settings;
-    private Process? _watchProcess;
+    private CancellationTokenSource? _watchCts;
 
-    public InjectorRunner(LaunchpadSettings settings)
+    public void StartWatching()
     {
-        _settings = settings;
-        _injectorPath = Path.Combine(AppContext.BaseDirectory, "Injector", "Launchpad.Injector.exe");
-    }
+        _watchCts = new CancellationTokenSource();
+        var token = _watchCts.Token;
 
-    public string? UnavailableReason { get; private set; }
-
-    /// <summary>Starts the background "is the game running" watcher.</summary>
-    public bool StartWatching()
-    {
-        if (!TryBuildStartInfo("watch", Array.Empty<string>(), out var startInfo))
+        Task.Run(async () =>
         {
-            return false;
-        }
-
-        _watchProcess = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
-        _watchProcess.OutputDataReceived += (_, e) => OnWatchLine(e.Data);
-        _watchProcess.Start();
-        _watchProcess.BeginOutputReadLine();
-        return true;
-    }
-
-    private void OnWatchLine(string? line)
-    {
-        if (string.IsNullOrEmpty(line))
-        {
-            return;
-        }
-
-        if (line.StartsWith("STARTED "))
-        {
-            if (int.TryParse(line.AsSpan(8), out int pid))
+            int lastPid = 0;
+            while (!token.IsCancellationRequested)
             {
-                GameStarted?.Invoke(pid);
+                int pid = GameProcess.FindPid();
+                if (pid != lastPid)
+                {
+                    if (pid != 0) GameStarted?.Invoke(pid);
+                    else          GameStopped?.Invoke();
+                    lastPid = pid;
+                }
+                try { await Task.Delay(1000, token); }
+                catch (OperationCanceledException) { break; }
             }
-        }
-        else if (line == "STOPPED")
-        {
-            GameStopped?.Invoke();
-        }
-    }
-
-    /// <summary>Injects the given DLLs into the running game. Returns the count injected.</summary>
-    public async Task<int> InjectAsync(int pid, IReadOnlyList<string> dllPaths, Action<string> log)
-    {
-        var args = new List<string> { "inject", pid.ToString() };
-        args.AddRange(dllPaths);
-
-        if (!TryBuildStartInfo(args[0], args.Skip(1), out var startInfo))
-        {
-            log(UnavailableReason ?? "Injector is unavailable.");
-            return 0;
-        }
-
-        using var process = new Process { StartInfo = startInfo };
-        process.OutputDataReceived += (_, e) => { if (e.Data != null) log(e.Data); };
-        process.Start();
-        process.BeginOutputReadLine();
-        await process.WaitForExitAsync();
-        return process.ExitCode;
-    }
-
-    /// <summary>
-    /// Launches Epic Games/Rockstar Games from inside the injector's
-    /// Windows/Wine context (registry lookups + protocol URLs that only
-    /// resolve there). Returns null on success, or an error message.
-    /// Steam isn't routed through here - steam:// already works from the
-    /// native Linux side without Wine.
-    /// </summary>
-    public async Task<string?> LaunchAsync(string target)
-    {
-        if (!TryBuildStartInfo("launch", new[] { target }, out var startInfo))
-        {
-            return UnavailableReason ?? "Injector is unavailable.";
-        }
-
-        string? error = null;
-        using var process = new Process { StartInfo = startInfo };
-        process.OutputDataReceived += (_, e) =>
-        {
-            if (e.Data != null && e.Data.StartsWith("ERROR "))
-            {
-                error = e.Data[6..];
-            }
-        };
-        process.Start();
-        process.BeginOutputReadLine();
-        await process.WaitForExitAsync();
-        return error;
+        }, token);
     }
 
     public void StopWatching()
     {
-        try
-        {
-            if (_watchProcess is { HasExited: false })
-            {
-                _watchProcess.Kill();
-            }
-        }
-        catch
-        {
-            // best effort
-        }
+        _watchCts?.Cancel();
+        _watchCts = null;
     }
 
-    private bool TryBuildStartInfo(string mode, IEnumerable<string> extraArgs, out ProcessStartInfo startInfo)
+    public async Task<int> InjectAsync(int pid, IReadOnlyList<string> dllPaths, Action<string> log)
     {
-        UnavailableReason = null;
-
-        if (!File.Exists(_injectorPath))
-        {
-            UnavailableReason = $"Injector executable not found at '{_injectorPath}'.";
-            startInfo = null!;
-            return false;
-        }
-
-        if (OperatingSystem.IsWindows())
-        {
-            startInfo = new ProcessStartInfo(_injectorPath)
-            {
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-        }
-        else
-        {
-            var prefix = ProtonPrefix.Find(_settings);
-            if (prefix == null)
-            {
-                UnavailableReason = "Couldn't find the Wine prefix. Set it manually in the \"Wine prefix\" field, " +
-                                     "or copy the WinePrefix folder path from Heroic / Steam / Lutris.";
-                startInfo = null!;
-                return false;
-            }
-
-            var wineBin = FindWineBinary();
-            startInfo = new ProcessStartInfo(wineBin)
-            {
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-            startInfo.ArgumentList.Add(_injectorPath);
-            startInfo.EnvironmentVariables["WINEPREFIX"] = prefix;
-        }
-
-        startInfo.ArgumentList.Add(mode);
-        foreach (var arg in extraArgs)
-        {
-            startInfo.ArgumentList.Add(arg);
-        }
-
-        return true;
+        string tempDir = Path.Combine(Path.GetTempPath(), "LaunchpadInjector");
+        return await Task.Run(() => DllInjector.InjectAll(pid, dllPaths, tempDir, log));
     }
 
-    /// <summary>
-    /// Resolves the wine binary to use. Priority:
-    ///   1. User override in settings
-    ///   2. Heroic Games Launcher Proton/Wine installations (auto-detected)
-    ///   3. System `wine`
-    /// Using the same wine/Proton binary that launched the game is critical:
-    /// only processes sharing the same wineserver are visible to each other,
-    /// and each wine version ships its own wineserver binary.
-    /// </summary>
-    private string FindWineBinary()
+    public async Task<string?> LaunchAsync(LauncherId launcher)
     {
-        if (!string.IsNullOrWhiteSpace(_settings.WinePathOverride) && File.Exists(_settings.WinePathOverride))
+        return await Task.Run(() =>
         {
-            return _settings.WinePathOverride;
-        }
-
-        // Heroic stores its wine/proton tools at ~/.config/heroic/tools/
-        // (NOT ~/.local/share - verified against Heroic 2.x config.json).
-        var heroicTools = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "heroic", "tools");
-
-        // Proton installs: ~/.config/heroic/tools/proton/<name>/files/bin/wine
-        var protonRoot = Path.Combine(heroicTools, "proton");
-        if (Directory.Exists(protonRoot))
-        {
-            // Sort descending so "GE-Proton-latest" symlink sorts before versioned dirs.
-            foreach (var dir in Directory.GetDirectories(protonRoot).OrderByDescending(d => d))
-            {
-                var w64 = Path.Combine(dir, "files", "bin", "wine64");
-                if (File.Exists(w64)) return w64;
-                var w = Path.Combine(dir, "files", "bin", "wine");
-                if (File.Exists(w)) return w;
-            }
-        }
-
-        // Wine installs: ~/.config/heroic/tools/wine/<name>/bin/wine
-        var wineRoot = Path.Combine(heroicTools, "wine");
-        if (Directory.Exists(wineRoot))
-        {
-            foreach (var dir in Directory.GetDirectories(wineRoot).OrderByDescending(d => d))
-            {
-                var w64 = Path.Combine(dir, "bin", "wine64");
-                if (File.Exists(w64)) return w64;
-                var w = Path.Combine(dir, "bin", "wine");
-                if (File.Exists(w)) return w;
-            }
-        }
-
-        return "wine";
+            StorefrontLauncher.TryLaunch(launcher, out var error);
+            return error;
+        });
     }
 }

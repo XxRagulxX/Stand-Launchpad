@@ -31,32 +31,15 @@ public partial class MainWindow : Window
         AutoInjectCheckBox.IsChecked = _settings.AutoInject;
         AutoInjectDelaySeconds.Value = _settings.AutoInjectDelaySeconds;
 
-        // Wine prefix/binary rows are only relevant on Linux.
-        if (OperatingSystem.IsWindows())
-        {
-            WinePrefixRow.IsVisible = false;
-            WineBinaryRow.IsVisible = false;
-            Height -= 80;
-        }
-        else
-        {
-            ProtonPrefixBox.Text = _settings.ProtonPrefixOverride ?? string.Empty;
-            WineBinaryBox.Text = _settings.WinePathOverride ?? string.Empty;
-        }
-
         _autoInjectTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _autoInjectTimer.Tick += AutoInjectTimer_Tick;
 
-        _injector = new InjectorRunner(_settings);
+        _injector = new InjectorRunner();
         _injector.GameStarted += OnGameStarted;
         _injector.GameStopped += OnGameStopped;
+        _injector.StartWatching();
 
-        if (!_injector.StartWatching())
-        {
-            InfoText.Text = _injector.UnavailableReason ?? "Injector is unavailable.";
-        }
-
-        Closing += (_, _) => SaveSettings();
+        Closing += (_, _) => { _injector.StopWatching(); SaveSettings(); };
     }
 
     private void OnGameStarted(int pid)
@@ -96,8 +79,6 @@ public partial class MainWindow : Window
             ToggleInjectOrLaunch(gameRunning: false);
             InfoText.Text = "Ready to inject; just start the game.";
 
-            // Give the user a moment after closing the game before auto-inject
-            // can fire again, in case it immediately restarts.
             _autoInjectArmed = false;
             DispatcherTimer.RunOnce(() => _autoInjectArmed = true, TimeSpan.FromSeconds(3));
         });
@@ -120,10 +101,7 @@ public partial class MainWindow : Window
 
     private async Task InjectAsync()
     {
-        if (_gtaPid == 0)
-        {
-            return;
-        }
+        if (_gtaPid == 0) return;
 
         InjectBtn.IsEnabled = false;
         InfoText.Text = "Injecting...";
@@ -145,18 +123,15 @@ public partial class MainWindow : Window
         });
 
         foreach (var file in files)
-        {
             _dlls.Add(new DllEntry { Path = file.Path.LocalPath, Checked = true });
-        }
+
         SaveSettings();
     }
 
     private void RemoveBtn_Click(object? sender, RoutedEventArgs e)
     {
         foreach (var item in DllList.SelectedItems!.Cast<DllEntry>().ToList())
-        {
             _dlls.Remove(item);
-        }
         SaveSettings();
     }
 
@@ -165,17 +140,11 @@ public partial class MainWindow : Window
 
     private void MoveSelected(int direction)
     {
-        if (DllList.SelectedItems!.Count != 1)
-        {
-            return;
-        }
+        if (DllList.SelectedItems!.Count != 1) return;
 
         int index = _dlls.IndexOf((DllEntry)DllList.SelectedItems[0]!);
         int newIndex = index + direction;
-        if (newIndex < 0 || newIndex >= _dlls.Count)
-        {
-            return;
-        }
+        if (newIndex < 0 || newIndex >= _dlls.Count) return;
 
         _dlls.Move(index, newIndex);
         DllList.SelectedIndex = newIndex;
@@ -184,23 +153,10 @@ public partial class MainWindow : Window
 
     private async void LaunchBtn_Click(object? sender, RoutedEventArgs e)
     {
-        if (LauncherType.SelectedItem is not LauncherOption option)
-        {
-            return;
-        }
-
-        // Steam's protocol handler works natively on Linux without Wine; on
-        // Windows everything goes through the same native code path. Only
-        // Epic/Rockstar on Linux need to run inside the Proton prefix.
-        if (option.Id == LauncherId.Steam || OperatingSystem.IsWindows())
-        {
-            GameLauncher.Launch(option.Id, error => InfoText.Text = error);
-            return;
-        }
+        if (LauncherType.SelectedItem is not LauncherOption option) return;
 
         InfoText.Text = "Launching...";
-        var target = option.Id == LauncherId.EpicGames ? "epic" : "rockstar";
-        var error = await _injector.LaunchAsync(target);
+        var error = await _injector.LaunchAsync(option.Id);
         InfoText.Text = error ?? "Launched.";
     }
 
@@ -209,43 +165,8 @@ public partial class MainWindow : Window
     private void AutoInjectCheckBox_Changed(object? sender, RoutedEventArgs e)
     {
         if (AutoInjectCheckBox.IsChecked != true)
-        {
             _autoInjectTimer.Stop();
-        }
         SaveSettings();
-    }
-
-    private void ProtonPrefixBox_LostFocus(object? sender, RoutedEventArgs e) => SaveSettings();
-    private void WineBinaryBox_LostFocus(object? sender, RoutedEventArgs e) => SaveSettings();
-
-    private async void ProtonPrefixBrowse_Click(object? sender, RoutedEventArgs e)
-    {
-        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-        {
-            Title = "Select Wine prefix folder (shown as 'WinePrefix folder' in Heroic)",
-            AllowMultiple = false,
-        });
-
-        if (folders.Count > 0)
-        {
-            ProtonPrefixBox.Text = folders[0].Path.LocalPath;
-            SaveSettings();
-        }
-    }
-
-    private async void WineBinaryBrowse_Click(object? sender, RoutedEventArgs e)
-    {
-        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            Title = "Select wine or wine64 binary (e.g. from Heroic's tools/proton folder)",
-            AllowMultiple = false,
-        });
-
-        if (files.Count > 0)
-        {
-            WineBinaryBox.Text = files[0].Path.LocalPath;
-            SaveSettings();
-        }
     }
 
     private void SaveSettings()
@@ -253,19 +174,8 @@ public partial class MainWindow : Window
         _settings.AutoInject = AutoInjectCheckBox.IsChecked == true;
         _settings.AutoInjectDelaySeconds = (int)(AutoInjectDelaySeconds.Value ?? 0);
         if (LauncherType.SelectedItem is LauncherOption option)
-        {
             _settings.GameLauncher = option.Id;
-        }
         _settings.Dlls = _dlls.ToList();
-        if (!OperatingSystem.IsWindows())
-        {
-            _settings.ProtonPrefixOverride = string.IsNullOrWhiteSpace(ProtonPrefixBox.Text)
-                ? null
-                : ProtonPrefixBox.Text.Trim();
-            _settings.WinePathOverride = string.IsNullOrWhiteSpace(WineBinaryBox.Text)
-                ? null
-                : WineBinaryBox.Text.Trim();
-        }
         _settings.Save();
     }
 }

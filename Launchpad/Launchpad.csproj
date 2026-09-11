@@ -24,16 +24,5 @@
     <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!--
-      Launchpad.Injector ships alongside this executable so they run in the
-      same Windows/Wine process space. Both are win-x64 .exe files.
-    -->
-    <None Include="../Injector/bin/$(Configuration)/net10.0-windows/win-x64/publish/**"
-          Condition="Exists('../Injector/bin/$(Configuration)/net10.0-windows/win-x64/publish')">
-      <Link>Injector/%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 
 </Project>
