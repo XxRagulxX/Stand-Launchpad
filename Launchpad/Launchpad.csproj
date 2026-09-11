@@ -19,6 +19,9 @@
     <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+    <!-- Pin the transitive dep Avalonia's Linux D-Bus interop pulls in: 0.20.0
+         has a known high-severity DoS (GHSA-xrw6-gwf8-vvr9), fixed in 0.21.0. -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.1" />
   </ItemGroup>
 
   <ItemGroup>

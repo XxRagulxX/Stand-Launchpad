@@ -56,6 +56,7 @@ internal static class GameLauncher
         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     }
 
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     private static void LaunchRockstarWindows(Action<string> showError)
     {
         try
