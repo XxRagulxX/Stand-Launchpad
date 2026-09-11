@@ -2,8 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Launchpad"
         x:Class="Launchpad.MainWindow"
-        Title="Launchpad"
-        Width="420" Height="360"
+        Title="Stand Launchpad"
+        Width="420" Height="384"
         CanResize="False">
     <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
 
@@ -19,12 +19,14 @@
         </Grid>
 
         <!-- Row 1: auto-inject options -->
-        <Grid Grid.Row="1" Margin="0,8,0,0" ColumnDefinitions="*,Auto,Auto">
-            <CheckBox x:Name="AutoInjectCheckBox" Grid.Column="0" Content="Auto-inject when game starts"
+        <StackPanel Grid.Row="1" Margin="0,8,0,0" Spacing="6">
+            <CheckBox x:Name="AutoInjectCheckBox" Content="Auto-inject when game starts"
                       Checked="AutoInjectCheckBox_Changed" Unchecked="AutoInjectCheckBox_Changed" />
-            <TextBlock Grid.Column="1" Text="Delay (s):" VerticalAlignment="Center" Margin="0,0,4,0" />
-            <NumericUpDown x:Name="AutoInjectDelaySeconds" Grid.Column="2" Minimum="0" Maximum="300" Width="90" />
-        </Grid>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Inject delay (seconds):" VerticalAlignment="Center" />
+                <NumericUpDown x:Name="AutoInjectDelaySeconds" Minimum="0" Maximum="300" Width="130" />
+            </StackPanel>
+        </StackPanel>
 
         <!-- Row 2: DLL list -->
         <ListBox x:Name="DllList" Grid.Row="2" Margin="0,8,0,0" SelectionMode="Multiple">
